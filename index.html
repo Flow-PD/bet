@@ -92,12 +92,24 @@
   .btn-ghost { background: var(--brand-soft); color: var(--brand); flex: 0 0 auto; }
 
   /* Plan selector (view switch) */
-  .plan-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
-  .plan-sel { display: flex; align-items: center; gap: 8px; }
-  .plan-label { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .plan-sel select { border: 1.5px solid var(--line); border-radius: 11px; padding: 9px 12px; font-size: 14px; font-weight: 600; color: var(--text); background: #fbfcfe; font-family: inherit; outline: none; max-width: 200px; }
-  .plan-sel select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background:#fff; }
+  .plan-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .plan-sel { display: flex; align-items: center; gap: 10px; }
+  .plan-label { font-size: 12.5px; color: var(--muted); font-weight: 600; letter-spacing: .3px; }
+  .plan-sel select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 10px 36px 10px 14px; font-size: 14px; font-weight: 600;
+    color: var(--text); background-color: #fff;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a93a3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 13px center;
+    font-family: inherit; outline: none; max-width: 220px; min-width: 120px; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+  }
+  .plan-sel select:hover { border-color: #cfd8e6; }
+  .plan-sel select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
   .plan-ops { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mini { border: 1.5px solid var(--line); background:#fff; color: var(--text); padding: 9px 14px; border-radius: 11px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .mini:hover { border-color: var(--brand); color: var(--brand); background: #fbfdff; }
   .mini.del-plan { background: var(--red); color: #fff; border-color: var(--red); animation: delpulse 2.2s infinite; }
   .mini.del-plan:hover { background: #cf2f2f; border-color: #cf2f2f; color:#fff; }
   .mini.del-plan:disabled { background: #f0b9b9; border-color: #f0b9b9; animation: none; }
@@ -110,8 +122,6 @@
   .pill.on { background: var(--brand); border-color: var(--brand); color:#fff; }
   .toolbar { display:flex; justify-content: space-between; align-items:center; gap:8px; flex-wrap: wrap; }
   .toolbar .right { display:flex; gap:8px; flex-wrap: wrap; }
-  .mini { border: 1.5px solid var(--line); background:#fff; color: var(--text); padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
-  .mini:hover { border-color: var(--brand); color: var(--brand); }
   .mini.danger:hover { border-color: var(--red); color: var(--red); }
 
   /* Compare table */
@@ -167,16 +177,16 @@
   .list-group-head .gg-net { margin-left: auto; font-variant-numeric: tabular-nums; }
   .list-group-head:first-child { margin-top: 0; }
   .rec .meta .pname { font-weight: 700; }
-  .rec .ops { display:flex; gap:6px; }
-  .rec .ops button { border: 1.5px solid var(--line); background: #fff; color: var(--muted); cursor: pointer; font-size: 12px; padding: 3px 9px; border-radius: 8px; white-space: nowrap; }
-  .rec .ops button:hover { border-color: var(--brand); color: var(--brand); }
-  .rec .ops button.del:hover { border-color: var(--red); color: var(--red); }
+  .rec .ops { display:flex; gap: 2px; align-items: center; }
+  .rec .ops button { border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 12.5px; padding: 5px 9px; border-radius: 8px; white-space: nowrap; font-family: inherit; transition: all .15s; }
+  .rec .ops button:hover { background: var(--black-soft); color: var(--brand); }
+  .rec .ops button.del:hover { background: var(--red-soft); color: var(--red); }
 
   .foot { text-align:center; color: var(--muted); font-size: 12px; margin-top: 24px; }
 
   /* Modal (替代原生 alert/confirm/prompt，本地文件下弹窗常被浏览器拦截) */
   .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
-  .modal-card { background: #fff; border-radius: 16px; padding: 22px; max-width: 340px; width: 100%; box-shadow: 0 24px 60px rgba(0,0,0,.28); }
+  .modal-card { background: #fff; border-radius: 16px; padding: 22px; max-width: 360px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.28); }
   .modal-msg { font-size: 15px; line-height: 1.6; margin-bottom: 18px; color: var(--text); white-space: pre-line; }
   .modal-actions { display: flex; gap: 10px; }
   .modal-actions button { flex: 1; border: none; border-radius: 11px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
@@ -197,10 +207,10 @@
       <div class="stat"><div class="label">总投入</div><div class="value" id="s-input">¥0</div></div>
       <div class="stat"><div class="label">总返还</div><div class="value" id="s-return">¥0</div></div>
       <div class="stat"><div class="label">净盈亏</div><div class="value" id="s-net">¥0</div></div>
-      <div class="stat"><div class="label">胜率(红单率)</div><div class="value" id="s-win">0%</div></div>
+      <div class="stat"><div class="label">胜率</div><div class="value" id="s-win">0%</div></div>
     </div>
     <div class="winbar-wrap">
-      <div class="winbar-head"><span>红单率</span><span id="win-pct-txt">0%</span></div>
+      <div class="winbar-head"><span>收益率</span><span id="win-pct-txt">0%</span></div>
       <div class="winbar"><i id="win-bar" style="width:0%"></i></div>
     </div>
    </div>
@@ -502,8 +512,12 @@
     netEl.textContent = fmtMoney(s.net);
     netEl.className = "value " + (s.net > 0 ? "pos" : s.net < 0 ? "neg" : "");
     document.getElementById("s-win").textContent = fmtPct(s.winRate);
-    document.getElementById("win-pct-txt").textContent = fmtPct(s.winRate);
-    document.getElementById("win-bar").style.width = (s.winRate * 100) + "%";
+    var roi = s.input > 0 ? s.net / s.input : 0;
+    var roiTxt = document.getElementById("win-pct-txt");
+    roiTxt.textContent = fmtPct(roi);
+    roiTxt.style.color = roi > 0 ? "#ff9a9a" : roi < 0 ? "#8ff0bf" : "#fff";
+    var fill = Math.max(0, Math.min(roi * 100, 100));
+    document.getElementById("win-bar").style.width = fill + "%";
   }
 
   // ---------- plan UI ----------
@@ -611,6 +625,59 @@
   }
 
   function renderAll() { renderPlans(); renderStats(); renderCompare(); renderList(); }
+
+  // ---------- edit record (all fields) ----------
+  function openEditModal(r) {
+    var optHtml = profiles.map(function (p) {
+      return '<option value="' + p.id + '"' + (p.id === r.profile ? " selected" : "") + '>' + escapeHtml(p.name) + '</option>';
+    }).join("");
+    var mHtml =
+      '<div class="modal-label">计划</div>' +
+      '<select class="modal-input" id="m-profile">' + optHtml + '</select>' +
+      '<div class="modal-label">日期</div>' +
+      '<input class="modal-input" id="m-date" type="date" value="' + escapeHtml(r.date || "") + '" />' +
+      '<div class="modal-label">赛事名称</div>' +
+      '<input class="modal-input" id="m-event" value="' + escapeHtml(r.event || "") + '" />' +
+      '<div class="modal-label">投注金额</div>' +
+      '<input class="modal-input" id="m-amount" type="number" min="0" step="0.01" value="' + (parseFloat(r.amount) || 0) + '" />' +
+      '<div class="modal-label">赔率（自动：按 奖金 ÷ 金额 计算）</div>' +
+      '<input class="modal-input" id="m-odds" type="text" value="' + (parseFloat(r.odds) || 0).toFixed(2) + '" readonly />' +
+      '<div class="modal-label">结果</div>' +
+      '<div class="seg" id="m-seg">' +
+        '<label class="red' + (r.result === "红" ? " on" : "") + '"><input type="radio" name="m-result" value="红"' + (r.result === "红" ? " checked" : "") + ' /><span>红 (命中)</span></label>' +
+        '<label class="black' + (r.result === "黑" ? " on" : "") + '"><input type="radio" name="m-result" value="黑"' + (r.result === "黑" ? " checked" : "") + ' /><span>黑 (未中)</span></label>' +
+      '</div>' +
+      '<div class="modal-label">奖金（返还）</div>' +
+      '<input class="modal-input" id="m-bonus" type="number" min="0" step="0.01" value="' + (parseFloat(r.bonus) || 0) + '" />';
+    openModal(mHtml, [
+      { label: "取消" },
+      { label: "保存", primary: true, onClick: function () {
+        var np = document.getElementById("m-profile").value;
+        var nd = (document.getElementById("m-date").value || "").trim();
+        var ne = (document.getElementById("m-event").value || "").trim();
+        var na = parseFloat(document.getElementById("m-amount").value) || 0;
+        var nb = parseFloat(document.getElementById("m-bonus").value) || 0;
+        var nr = document.querySelector('input[name="m-result"]:checked').value;
+        if (!ne) { showAlert("赛事名称不能为空"); return; }
+        r.profile = np; r.date = nd; r.event = ne; r.amount = na; r.bonus = nb; r.result = nr;
+        r.odds = na > 0 ? Math.round((nb / na) * 100) / 100 : 0;
+        saveRecords(); renderAll();
+      } }
+    ]);
+    var mSync = function () {
+      var a = parseFloat(document.getElementById("m-amount").value) || 0;
+      var b = parseFloat(document.getElementById("m-bonus").value) || 0;
+      document.getElementById("m-odds").value = a > 0 ? (b / a).toFixed(2) : "";
+    };
+    ["m-amount", "m-bonus"].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.addEventListener("input", mSync);
+    });
+    document.querySelectorAll('#m-seg input').forEach(function (el) {
+      el.addEventListener("change", function () {
+        document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
+      });
+    });
+  }
 
   // ---------- form ----------
   var form = document.getElementById("add-form");
@@ -731,20 +798,7 @@
       }, true);
     } else if (btn.classList.contains("edit")) {
       var r = records.find(function (x) { return x.id === id; }); if (!r) return;
-      var amount = parseFloat(r.amount) || 0;
-      var curNet = Math.round(((parseFloat(r.bonus) || 0) - amount) * 100) / 100;
-      openModal(
-        '<div class="modal-label">修改日期（YYYY-MM-DD，可留空）</div>' +
-        '<input class="modal-input" id="modal-date" value="' + escapeHtml(r.date || "") + '" />' +
-        '<div class="modal-label">纯盈利（实际盈亏，亏损用负数，如 -50）</div>' +
-        '<input class="modal-input" id="modal-net" value="' + curNet.toFixed(2) + '" />',
-        [{ label: "取消" }, { label: "保存", primary: true, onClick: function () {
-          var nd = (document.getElementById("modal-date").value || "").trim();
-          var nn = parseFloat(document.getElementById("modal-net").value);
-          if (!isNaN(nn)) { r.date = nd; r.bonus = Math.round((amount + nn) * 100) / 100; r.odds = amount > 0 ? Math.round((r.bonus / amount) * 100) / 100 : 0; saveRecords(); renderAll(); }
-        } }]
-      );
-      setTimeout(function () { var el = document.getElementById("modal-date"); if (el) el.focus(); }, 50);
+      openEditModal(r);
     }
   });
 
