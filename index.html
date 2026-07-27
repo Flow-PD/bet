@@ -37,9 +37,9 @@
     position: sticky; top: 0; z-index: 20;
     background: linear-gradient(135deg, #3b6ef5, #5b8bff);
     color: #fff; border-radius: 0 0 22px 22px;
-    padding: 20px 18px 18px;
     box-shadow: var(--shadow);
   }
+  .topbar-inner { max-width: 860px; margin: 0 auto; padding: 18px 16px 16px; }
   .topbar h1 { margin: 0 0 2px; font-size: 19px; font-weight: 700; letter-spacing: .5px; }
   .topbar .sub { font-size: 12px; opacity: .85; margin-bottom: 14px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -191,6 +191,7 @@
 </head>
 <body>
   <div class="topbar">
+   <div class="topbar-inner">
     <h1>个人投注记录</h1>
     <div class="sub" id="view-sub">全部记录</div>
     <div class="stats">
@@ -203,6 +204,7 @@
       <div class="winbar-head"><span>红单率</span><span id="win-pct-txt">0%</span></div>
       <div class="winbar"><i id="win-bar" style="width:0%"></i></div>
     </div>
+   </div>
   </div>
 
   <div class="wrap">
@@ -235,8 +237,9 @@
           <input type="number" id="f-amount" placeholder="0" min="0" step="0.01" required />
         </div>
         <div class="field">
-          <label for="f-odds">赔率</label>
-          <input type="number" id="f-odds" placeholder="0.00" min="0" step="0.01" required />
+          <label for="f-odds">赔率（自动）</label>
+          <input type="text" id="f-odds" placeholder="奖金÷金额" readonly />
+          <span class="hint">根据下方「奖金」自动计算，保留 2 位小数</span>
         </div>
         <div class="field">
           <label>结果</label>
@@ -247,13 +250,12 @@
         </div>
         <div class="field">
           <label for="f-bonus">奖金（返还）</label>
-          <input type="number" id="f-bonus" placeholder="自动计算，可修改" min="0" step="0.01" />
-          <span class="hint">红单默认 = 金额×赔率；黑单默认 0</span>
+          <input type="number" id="f-bonus" placeholder="实得返还，如 1080" min="0" step="0.01" required />
+          <span class="hint">赔率 = 奖金 ÷ 投注金额，自动算出</span>
         </div>
         <div class="field full">
           <div class="actions">
             <button type="submit" class="btn btn-primary">+ 添加记录</button>
-            <button type="button" class="btn btn-ghost" id="calc-btn">自动算奖金</button>
           </div>
         </div>
       </form>
@@ -436,7 +438,14 @@
     updateDupNet("N"); updateDupNet("O");
     ["N", "O"].forEach(function (side) {
       ["amount", "odds", "bonus"].forEach(function (f) {
-        document.getElementById("dup" + side + "-" + f).addEventListener("input", function () { updateDupNet(side); });
+        document.getElementById("dup" + side + "-" + f).addEventListener("input", function () {
+          if (f !== "odds") {
+            var amt = parseFloat(document.getElementById("dup" + side + "-amount").value) || 0;
+            var bn = parseFloat(document.getElementById("dup" + side + "-bonus").value) || 0;
+            if (amt > 0) document.getElementById("dup" + side + "-odds").value = (bn / amt).toFixed(2);
+          }
+          updateDupNet(side);
+        });
       });
     });
     dupOverlay.style.display = "flex";
@@ -612,26 +621,20 @@
     var val = document.querySelector('input[name="result"]:checked').value;
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
+    var b = document.getElementById("f-bonus");
+    if (val === "黑" && b.value === "") b.value = "0";
+    autoOdds();
   }
   document.querySelectorAll('input[name="result"]').forEach(function (el) { el.addEventListener("change", syncSeg); });
   syncSeg();
 
-  function autoBonusIfEmpty() {
-    var b = document.getElementById("f-bonus");
-    if (b.value === "") {
-      var amount = parseFloat(document.getElementById("f-amount").value) || 0;
-      var odds = parseFloat(document.getElementById("f-odds").value) || 0;
-      var val = document.querySelector('input[name="result"]:checked').value;
-      if (amount > 0 && odds > 0) b.value = calcBonus({ amount: amount, odds: odds, result: val });
-    }
-  }
-  ["f-amount", "f-odds"].forEach(function (id) { document.getElementById(id).addEventListener("input", autoBonusIfEmpty); });
-  document.getElementById("calc-btn").addEventListener("click", function () {
+  function autoOdds() {
     var amount = parseFloat(document.getElementById("f-amount").value) || 0;
-    var odds = parseFloat(document.getElementById("f-odds").value) || 0;
-    var val = document.querySelector('input[name="result"]:checked').value;
-    document.getElementById("f-bonus").value = calcBonus({ amount: amount, odds: odds, result: val });
-  });
+    var bonus = parseFloat(document.getElementById("f-bonus").value) || 0;
+    var o = document.getElementById("f-odds");
+    o.value = (amount > 0) ? (bonus / amount).toFixed(2) : "";
+  }
+  ["f-amount", "f-bonus"].forEach(function (id) { document.getElementById(id).addEventListener("input", autoOdds); });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -731,7 +734,7 @@
         [{ label: "取消" }, { label: "保存", primary: true, onClick: function () {
           var nd = (document.getElementById("modal-date").value || "").trim();
           var nn = parseFloat(document.getElementById("modal-net").value);
-          if (!isNaN(nn)) { r.date = nd; r.bonus = Math.round((amount + nn) * 100) / 100; saveRecords(); renderAll(); }
+          if (!isNaN(nn)) { r.date = nd; r.bonus = Math.round((amount + nn) * 100) / 100; r.odds = amount > 0 ? Math.round((r.bonus / amount) * 100) / 100 : 0; saveRecords(); renderAll(); }
         } }]
       );
       setTimeout(function () { var el = document.getElementById("modal-date"); if (el) el.focus(); }, 50);
