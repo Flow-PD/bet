@@ -91,22 +91,18 @@
   .btn-primary { background: var(--brand); color: #fff; }
   .btn-ghost { background: var(--brand-soft); color: var(--brand); flex: 0 0 auto; }
 
-  /* Chips / profile */
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip { border: 1.5px solid var(--line); background:#fff; color: var(--text); padding: 7px 13px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s; }
-  .chip i { width: 9px; height: 9px; border-radius: 99px; display: inline-block; }
-  .chip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
-  .chip.on i { box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
-  .manage { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .prow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 11px; }
-  .prow i { width: 10px; height: 10px; border-radius: 99px; flex: 0 0 auto; }
-  .prow .pn { flex: 1; font-weight: 600; font-size: 14px; }
-  .prow input.pn-input { flex: 1; font-weight: 600; font-size: 14px; font-family: inherit; color: var(--text); border: 1.5px solid transparent; background: transparent; border-radius: 8px; padding: 5px 8px; min-width: 0; }
-  .prow input.pn-input:hover { border-color: var(--line); background: #fff; }
-  .prow input.pn-input:focus { border-color: var(--brand); background: #fff; outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
-  .prow button { border: 1.5px solid var(--line); background:#fff; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); }
-  .prow button:hover { border-color: var(--brand); color: var(--brand); }
-  .prow button.del:hover { border-color: var(--red); color: var(--red); }
+  /* Plan selector (view switch) */
+  .plan-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .plan-sel { display: flex; align-items: center; gap: 8px; }
+  .plan-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .plan-sel select { border: 1.5px solid var(--line); border-radius: 11px; padding: 9px 12px; font-size: 14px; font-weight: 600; color: var(--text); background: #fbfcfe; font-family: inherit; outline: none; max-width: 200px; }
+  .plan-sel select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background:#fff; }
+  .plan-ops { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mini.del-plan { background: var(--red); color: #fff; border-color: var(--red); animation: delpulse 2.2s infinite; }
+  .mini.del-plan:hover { background: #cf2f2f; border-color: #cf2f2f; color:#fff; }
+  .mini.del-plan:disabled { background: #f0b9b9; border-color: #f0b9b9; animation: none; }
+  .mini:disabled { opacity: .5; cursor: not-allowed; }
+  @keyframes delpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,59,59,.40); } 50% { box-shadow: 0 0 0 6px rgba(232,59,59,0); } }
 
   /* Filters */
   .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -213,10 +209,18 @@
   <div class="wrap">
     <!-- Profiles -->
     <div class="card">
-      <h2><span class="dot"></span>记录人 / 账本</h2>
-      <div class="chips" id="profile-chips"></div>
-      <button class="mini" id="add-profile-btn" style="margin-top:10px;">+ 新建记录人</button>
-      <div class="manage" id="profile-manage"></div>
+      <h2><span class="dot"></span>计划</h2>
+      <div class="plan-bar">
+        <div class="plan-sel">
+          <span class="plan-label">查看</span>
+          <select id="plan-select"></select>
+        </div>
+        <div class="plan-ops">
+          <button class="mini" id="rename-plan-btn" title="修改计划名称">✎ 改名</button>
+          <button class="mini del-plan" id="del-plan-btn" title="删除当前计划">✕ 删除</button>
+          <button class="mini" id="add-plan-btn">＋ 新建计划</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add form -->
@@ -224,7 +228,7 @@
       <h2><span class="dot"></span>添加投注记录</h2>
       <form id="add-form" class="form-grid" autocomplete="off">
         <div class="field">
-          <label for="f-profile">记录人</label>
+          <label for="f-profile">计划</label>
           <select id="f-profile"></select>
         </div>
         <div class="field">
@@ -406,7 +410,7 @@
     function fields(side, rec) {
       return '<div class="dup-col ' + (side === "N" ? "new" : "old") + '">' +
         '<h4>' + (side === "N" ? "新记录（本次添加）" : "历史记录（已存在）") + "</h4>" +
-        '<div class="dup-f"><label>记录人</label><select id="dup' + side + '-profile">' + optHtml + "</select></div>" +
+        '<div class="dup-f"><label>计划</label><select id="dup' + side + '-profile">' + optHtml + "</select></div>" +
         '<div class="dup-f"><label>日期</label><input type="date" id="dup' + side + '-date" value="' + escapeHtml(rec.date || "") + '" /></div>' +
         '<div class="dup-f"><label>赛事名称</label><input type="text" id="dup' + side + '-event" value="' + escapeHtml(rec.event || "") + '" /></div>' +
         '<div class="dup-f"><label>投注金额</label><input type="number" id="dup' + side + '-amount" step="0.01" value="' + (rec.amount || 0) + '" /></div>' +
@@ -418,7 +422,7 @@
         '<div class="dup-net" id="dup' + side + '-net"></div>' +
         "</div>";
     }
-    document.getElementById("dup-title").textContent = "发现疑似重复记录（同一记录人、同日、同赛事、同金额）";
+    document.getElementById("dup-title").textContent = "发现疑似重复记录（同一计划、同日、同赛事、同金额）";
     document.getElementById("dup-body").innerHTML = '<div class="dup-grid">' + fields("N", newRec) + fields("O", oldRec) + "</div>";
     var actions = document.getElementById("dup-actions");
     actions.innerHTML = "";
@@ -502,22 +506,16 @@
     document.getElementById("win-bar").style.width = (s.winRate * 100) + "%";
   }
 
-  // ---------- profiles UI ----------
-  function renderProfileChips() {
-    var box = document.getElementById("profile-chips");
-    var html = '<span class="chip' + (currentView === "all" ? " on" : "") + '" data-view="all"><i style="background:#cbd5e1"></i>全部</span>';
-    html += profiles.map(function (p) {
-      return '<span class="chip' + (currentView === p.id ? " on" : "") + '" data-view="' + p.id + '"><i style="background:' + p.color + '"></i>' + escapeHtml(p.name) + '</span>';
-    }).join("");
-    box.innerHTML = html;
-  }
-  function renderManage() {
-    var box = document.getElementById("profile-manage");
-    box.innerHTML = profiles.map(function (p) {
-      return '<div class="prow" data-id="' + p.id + '"><i style="background:' + p.color + '"></i>' +
-        '<input class="pn-input" data-id="' + p.id + '" value="' + escapeHtml(p.name) + '" aria-label="记录人名字" placeholder="记录人名字" />' +
-        '<button class="del" data-act="del" data-id="' + p.id + '">' + (profiles.length <= 1 ? "删除" : "删除") + '</button></div>';
-    }).join("");
+  // ---------- plan UI ----------
+  function renderPlanSelect() {
+    var sel = document.getElementById("plan-select");
+    var html = '<option value="all">全部</option>';
+    html += profiles.map(function (p) { return '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>'; }).join("");
+    sel.innerHTML = html;
+    sel.value = (currentView !== "all" && getProfile(currentView)) ? currentView : "all";
+    var isPlan = currentView !== "all" && !!getProfile(currentView);
+    document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
+    document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
   }
   function fillProfileSelect() {
     var sel = document.getElementById("f-profile");
@@ -525,7 +523,7 @@
     var def = (currentView !== "all" && getProfile(currentView)) ? currentView : profiles[0].id;
     sel.value = def;
   }
-  function renderProfiles() { renderProfileChips(); renderManage(); fillProfileSelect(); }
+  function renderPlans() { renderPlanSelect(); fillProfileSelect(); }
 
   // ---------- compare ----------
   function renderCompare() {
@@ -538,7 +536,7 @@
     var total = compute(records);
     var troi = total.input > 0 ? total.net / total.input : 0;
 
-    var head = "<thead><tr><th>记录人</th><th>笔数</th><th>总投入</th><th>总返还</th><th>净盈亏</th><th>胜率</th><th>收益率</th></tr></thead>";
+    var head = "<thead><tr><th>计划</th><th>笔数</th><th>总投入</th><th>总返还</th><th>净盈亏</th><th>胜率</th><th>收益率</th></tr></thead>";
     var body = "<tbody>" + rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
       return "<tr>" +
@@ -612,7 +610,7 @@
     }
   }
 
-  function renderAll() { renderProfiles(); renderStats(); renderCompare(); renderList(); }
+  function renderAll() { renderPlans(); renderStats(); renderCompare(); renderList(); }
 
   // ---------- form ----------
   var form = document.getElementById("add-form");
@@ -666,49 +664,55 @@
     afterAddReset();
   });
 
-  // ---------- profile chips ----------
-  document.getElementById("profile-chips").addEventListener("click", function (e) {
-    var c = e.target.closest(".chip"); if (!c) return;
-    currentView = c.getAttribute("data-view");
+  // ---------- plan select (view switch) ----------
+  document.getElementById("plan-select").addEventListener("change", function () {
+    currentView = this.value;
     var p = getProfile(currentView);
-    document.getElementById("view-sub").textContent = currentView === "all" ? "全部记录 · 列表按记录人分组" : ("记录人：" + (p ? p.name : ""));
+    document.getElementById("view-sub").textContent = currentView === "all" ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
     if (currentView !== "all" && getProfile(currentView)) document.getElementById("f-profile").value = currentView;
-    renderProfileChips(); renderStats(); renderList();
+    renderPlans(); renderStats(); renderList();
   });
 
-  // ---------- manage (rename inline / delete) ----------
-  document.getElementById("profile-manage").addEventListener("click", function (e) {
-    var btn = e.target.closest("button"); if (!btn) return;
-    var id = btn.getAttribute("data-id"), act = btn.getAttribute("data-act");
-    var p = getProfile(id); if (!p) return;
-    if (act === "del") {
-      if (profiles.length <= 1) { showAlert("至少保留一个记录人"); return; }
-      var cnt = records.filter(function (r) { return r.profile === id; }).length;
-      showConfirm("删除记录人「" + escapeHtml(p.name) + "」" + (cnt ? "及其 " + cnt + " 条记录？" : "？") + "\n此操作不可恢复", function () {
-        profiles = profiles.filter(function (x) { return x.id !== id; });
-        records = records.filter(function (r) { return r.profile !== id; });
-        if (currentView === id) currentView = "all";
-        saveProfiles(); saveRecords(); renderAll();
-      }, true);
-    }
-  });
-  document.getElementById("profile-manage").addEventListener("change", function (e) {
-    var inp = e.target.closest(".pn-input"); if (!inp) return;
-    var id = inp.getAttribute("data-id");
-    var p = getProfile(id); if (!p) return;
-    var name = inp.value.trim();
-    if (!name) { inp.value = p.name; return; }
-    if (profiles.some(function (x) { return x.id !== id && x.name.toLowerCase() === name.toLowerCase(); })) { showAlert("已存在同名记录人"); inp.value = p.name; return; }
-    p.name = name; saveProfiles(); renderAll();
-  });
-  document.getElementById("add-profile-btn").addEventListener("click", function () {
+  // ---------- rename plan ----------
+  document.getElementById("rename-plan-btn").addEventListener("click", function () {
+    if (currentView === "all" || !getProfile(currentView)) return;
+    var p = getProfile(currentView);
     openModal(
-      '<div class="modal-label">新建记录人名字</div>' +
+      '<div class="modal-label">修改计划名称</div>' +
+      '<input class="modal-input" id="modal-name" value="' + escapeHtml(p.name) + '" />',
+      [{ label: "取消" }, { label: "保存", primary: true, onClick: function () {
+        var name = (document.getElementById("modal-name").value || "").trim();
+        if (!name) return;
+        if (profiles.some(function (x) { return x.id !== p.id && x.name.toLowerCase() === name.toLowerCase(); })) { showAlert("已存在同名计划"); return; }
+        p.name = name; saveProfiles(); renderAll();
+      } }]
+    );
+    setTimeout(function () { var el = document.getElementById("modal-name"); if (el) { el.focus(); el.select(); } }, 50);
+  });
+
+  // ---------- delete plan (prominent + warning) ----------
+  document.getElementById("del-plan-btn").addEventListener("click", function () {
+    if (currentView === "all" || !getProfile(currentView)) return;
+    var p = getProfile(currentView);
+    if (profiles.length <= 1) { showAlert("至少保留一个计划"); return; }
+    var cnt = records.filter(function (r) { return r.profile === p.id; }).length;
+    showConfirm("⚠️ 删除计划「" + escapeHtml(p.name) + "」\n将同时删除该计划下的 " + cnt + " 条记录，\n此操作不可恢复！", function () {
+      profiles = profiles.filter(function (x) { return x.id !== p.id; });
+      records = records.filter(function (r) { return r.profile !== p.id; });
+      currentView = "all";
+      saveProfiles(); saveRecords(); renderAll();
+    }, true);
+  });
+
+  // ---------- add plan ----------
+  document.getElementById("add-plan-btn").addEventListener("click", function () {
+    openModal(
+      '<div class="modal-label">新建计划名称</div>' +
       '<input class="modal-input" id="modal-name" placeholder="例如：小花" />',
       [{ label: "取消" }, { label: "创建", primary: true, onClick: function () {
         var name = (document.getElementById("modal-name").value || "").trim();
         if (!name) return;
-        if (profiles.some(function (p) { return p.name.toLowerCase() === name.toLowerCase(); })) { showAlert("已存在同名记录人"); return; }
+        if (profiles.some(function (pp) { return pp.name.toLowerCase() === name.toLowerCase(); })) { showAlert("已存在同名计划"); return; }
         profiles.push({ id: uid(), name: name, color: nextColor() });
         saveProfiles(); renderAll();
       } }]
@@ -755,7 +759,7 @@
   // ---------- export CSV ----------
   document.getElementById("export-btn").addEventListener("click", function () {
     if (records.length === 0) { showAlert("暂无数据可导出"); return; }
-    var header = ["记录人", "日期", "赛事名称", "投注金额", "赔率", "结果", "奖金"];
+    var header = ["计划", "日期", "赛事名称", "投注金额", "赔率", "结果", "奖金"];
     var rows = records.map(function (r) {
       return [getProfileName(r.profile), r.date, r.event, parseFloat(r.amount) || 0, parseFloat(r.odds) || 0, r.result, parseFloat(r.bonus) || 0];
     });
@@ -803,7 +807,7 @@
         profiles = profiles.filter(function (p) { return records.some(function (r) { return r.profile === p.id; }); });
         if (profiles.length === 0) { profiles.push({ id: uid(), name: "我自己", color: PALETTE[0] }); }
         saveProfiles(); saveRecords(); renderAll();
-        showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个记录人）");
+        showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个计划）");
       } catch (err) { showAlert("导入失败：" + err.message); }
       finally { importFile.value = ""; }
     };
@@ -822,7 +826,7 @@
     }
     if (hi < 0) return [];
     var keys = {
-      profile: ["记录人", "账本", "profile", "name", "谁", "人", "记录者"],
+      profile: ["记录人", "账本", "profile", "name", "谁", "人", "记录者", "计划"],
       date: ["日期", "时间", "date"],
       event: ["赛事名称", "计划", "赛事", "项目", "event", "备注", "描述"],
       amount: ["投注金额", "投入", "金额", "本金", "amount"],
