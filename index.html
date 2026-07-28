@@ -267,8 +267,17 @@
   .history-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .history-bar .filters { margin-bottom: 0; }
   .history-bar .plan-ops { flex: 0 0 auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  /* 历史记录导出下拉：与「导入/清空」按钮同高同风格；弹层宽度与触发器对齐 */
-  #hist-export-wrap .c-select-trigger { min-width: 150px; padding: 9px 32px 9px 14px; border-radius: 11px; }
+  /* 历史记录操作栏：导入 / 导出(下拉) / 清空 三个同尺寸、同风格（两字、定宽居中），适配手机 */
+  .history-bar .plan-ops .mini,
+  #hist-export-wrap .c-select-trigger {
+    min-width: 66px; justify-content: center; text-align: center; box-sizing: border-box;
+  }
+  #hist-export-wrap .c-select-trigger {
+    /* 与 .mini 完全一致的视觉框：边框/圆角/字号/字重 */
+    border: 1.5px solid var(--line); background:#fff; color: var(--text);
+    font-size: 13px; font-weight: 600; border-radius: 11px;
+    padding: 9px 34px 9px 14px;
+  }
   #hist-export-wrap .c-drop { left: auto; right: 0; min-width: 100%; width: 100%; max-width: none; }
   .pill { border: 1.5px solid var(--line); background:#fff; color: var(--muted); padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
   /* 选中态：仅 红/黑 上色，「全部」保持中性（不改色），仅以边框加深表示已选 */
@@ -321,9 +330,11 @@
   .rec .meta b { color: var(--text); font-variant-numeric: tabular-nums; }
   .rec .meta .pl.pos { color: var(--red); font-weight: 700; }
   .rec .meta .pl.neg { color: var(--green); font-weight: 700; }
-  /* 红单高亮：赛事名变红 + 左侧红条 */
+  /* 红单/黑单高亮：赛事名变色 + 左侧色条（与红绿语义一致） */
   .rec.red-event { border-left: 4px solid var(--red); }
   .rec.red-event .event { color: var(--red); font-weight: 800; }
+  .rec.black-event { border-left: 4px solid var(--black); }
+  .rec.black-event .event { color: var(--black); font-weight: 800; }
   /* 添加重复时的对比弹窗 */
   .dup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 480px) { .dup-grid { grid-template-columns: 1fr; } }
@@ -389,12 +400,7 @@
     display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
     justify-content: flex-end; margin: 0;
   }
-  .cmp-bar .c-select-trigger { font-size: 13px; padding: 9px 30px 9px 12px; min-width: 132px; }
-  /* 净盈亏汇总胶囊：与对比表同一红绿语义 */
-  .net-chip { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); background: var(--brand-soft); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; white-space: nowrap; }
-  .net-chip b { font-size: 14px; font-variant-numeric: tabular-nums; }
-  .net-chip.pos b { color: var(--red); }
-  .net-chip.neg b { color: var(--green); }
+  .cmp-bar .c-select-trigger { font-size: 13px; padding: 8px 28px 8px 11px; min-width: 110px; }
   /* 导出下拉靠右对齐，且弹层宽度与触发器对齐（同尺寸 UI 框架） */
   #cmp-export-wrap .c-select-trigger { min-width: 150px; }
   #cmp-export-wrap .c-drop { left: auto; right: 0; min-width: 100%; width: 100%; max-width: none; }
@@ -627,7 +633,6 @@
       <div class="cmp-head">
         <h2><span class="dot"></span>对比分析</h2>
         <div class="cmp-bar">
-          <div class="net-chip" id="cmp-net-chip">净盈亏 <b>¥0</b></div>
           <div class="c-select" id="cmp-sort-wrap">
             <div class="c-select-trigger" id="cmp-sort-trigger"><span id="cmp-sort-text">净盈亏（高→低）</span></div>
             <div class="c-drop" id="cmp-drop"></div>
@@ -654,11 +659,11 @@
           <span class="pill" data-f="黑">黑</span>
         </div>
         <div class="plan-ops">
+          <button class="mini" id="import-btn">导入</button>
           <div class="c-select" id="hist-export-wrap">
             <div class="c-select-trigger" id="hist-export-trigger"><span id="hist-export-text">导出</span></div>
             <div class="c-drop" id="hist-export-drop"></div>
           </div>
-          <button class="mini" id="import-btn">导入</button>
           <button class="mini danger" id="clear-btn">清空</button>
           <input type="file" id="import-file" accept=".csv,.xls,.xlsx,.json,.txt,text/csv,application/json,application/vnd.ms-excel" style="display:none" />
         </div>
@@ -1154,13 +1159,6 @@
     });
     var total = compute(records);
 
-    // 顶部「净盈亏」汇总胶囊（与对比表同一红绿语义）
-    var chip = document.getElementById("cmp-net-chip");
-    if (chip) {
-      chip.className = "net-chip" + (total.net > 0 ? " pos" : total.net < 0 ? " neg" : "");
-      chip.innerHTML = "净盈亏 <b>" + fmtMoney(total.net) + "</b>";
-    }
-
     var head = "<thead><tr>" + CMP_COLS.map(function (c) {
       return "<th>" + c.label + "</th>";
     }).join("") + "</tr></thead>";
@@ -1200,25 +1198,23 @@
       renderCompare();
     });
 
-  // 对比分析：导出下拉（多种格式）
+  // 对比分析：导出下拉（CSV / Excel 表格 / 图片 三种格式）
   cmpExportCtrl = initCustomDrop("cmp-export-wrap", "cmp-export-trigger", "cmp-export-drop", "cmp-export-text",
     [
-      { value: "csv", label: "CSV（逗号分隔）" },
-      { value: "xls", label: "Excel 表格（.xls）" },
-      { value: "json", label: "JSON 数据" },
-      { value: "txt", label: "TXT 文本（制表符）" }
+      { value: "csv", label: "CSV" },
+      { value: "xls", label: "Excel 表格" },
+      { value: "img", label: "图片" }
     ], "__none__", function (val) {
       exportCompare(val);
       cmpExportCtrl.rearm("导出对比");
     });
 
-  // 历史记录：导出下拉（多种格式，与对比分析一致）
+  // 历史记录：导出下拉（CSV / Excel 表格 / 图片 三种格式，与对比分析一致）
   histExportCtrl = initCustomDrop("hist-export-wrap", "hist-export-trigger", "hist-export-drop", "hist-export-text",
     [
-      { value: "csv", label: "CSV（逗号分隔）" },
-      { value: "xls", label: "Excel 表格（.xls）" },
-      { value: "json", label: "JSON 数据" },
-      { value: "txt", label: "TXT 文本（制表符）" }
+      { value: "csv", label: "CSV" },
+      { value: "xls", label: "Excel 表格" },
+      { value: "img", label: "图片" }
     ], "__none__", function (val) {
       exportRecords(val);
       histExportCtrl.rearm("导出");
@@ -1231,7 +1227,8 @@
     var plText = (y >= 0 ? "+" : "") + fmtPct(y);
     var tagClass = r.result === "红" ? "red" : "black";
     var isNew = (r.id === lastAddedId) ? " is-new" : "";
-    return '<div class="rec' + (r.result === "红" ? " red-event" : "") + isNew + '" data-id="' + r.id + '">' +
+    var evCls = r.result === "红" ? " red-event" : r.result === "黑" ? " black-event" : "";
+    return '<div class="rec' + evCls + isNew + '" data-id="' + r.id + '">' +
       '<div class="rec-top">' +
         '<div class="rec-head">' +
           '<div class="event">' + escapeHtml(r.event) + '</div>' +
@@ -1489,6 +1486,86 @@
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
+  // 语义色：盈利红、亏损绿（与中国股票涨跌一致）；0 用中性灰
+  function numColor(n) {
+    n = Number(n);
+    if (isNaN(n) || n === 0) return "#5b6472";
+    return n > 0 ? "#e83b3b" : "#1ba672";
+  }
+  function resultColor(s) { return s === "红" ? "#e83b3b" : s === "黑" ? "#1ba672" : "#5b6472"; }
+  // 将表格（headers + rows）绘制为 PNG 图片并下载。rows 中每个单元格可为 字符串 或 {t, c}（c 为颜色）。
+  function tableToPng(title, headers, rows, fname) {
+    var scale = 2, padX = 28, padTop = 20, cellPadX = 14, headerH = 42, rowH = 40;
+    var fontSize = 14, titleFont = 17;
+    var fontOf = function (bold) { return (bold ? "bold " : "") + fontSize + "px -apple-system,'PingFang SC','Microsoft YaHei',sans-serif"; };
+    var titleFontStr = titleFont + "px -apple-system,'PingFang SC','Microsoft YaHei',sans-serif";
+    var c = document.createElement("canvas");
+    var ctx = c.getContext("2d");
+    ctx.font = fontOf(false);
+    var colW = headers.map(function (h, ci) {
+      var max = ctx.measureText(String(h)).width;
+      rows.forEach(function (r) {
+        var cell = r[ci], t = (cell && typeof cell === "object") ? cell.t : cell;
+        var w = ctx.measureText(String(t == null ? "" : t)).width;
+        if (w > max) max = w;
+      });
+      return Math.ceil(max) + cellPadX * 2;
+    });
+    var tableW = colW.reduce(function (a, b) { return a + b; }, 0);
+    var sumW = function (ci) { var s = 0; for (var i = 0; i < ci; i++) s += colW[i]; return s; };
+    ctx.font = titleFontStr;
+    var titleW = ctx.measureText(title).width;
+    var W = Math.max(tableW, titleW) + padX * 2;
+    var H = padTop + titleFont + 14 + headerH + rows.length * rowH + 20;
+    c.width = W * scale; c.height = H * scale;
+    ctx.scale(scale, scale);
+    ctx.textBaseline = "top";
+    // 背景
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    // 标题
+    ctx.fillStyle = "#2f3742"; ctx.font = titleFontStr;
+    ctx.fillText(title, padX, padTop);
+    // 表头
+    var y = padTop + titleFont + 14;
+    ctx.fillStyle = "#2f3742"; ctx.fillRect(padX, y, tableW, headerH);
+    ctx.fillStyle = "#ffffff"; ctx.font = fontOf(true);
+    headers.forEach(function (h, ci) {
+      var x = padX + sumW(ci);
+      ctx.fillText(String(h), x + cellPadX, y + (headerH - fontSize) / 2);
+    });
+    // 数据行
+    var ry = y + headerH;
+    rows.forEach(function (r, ri) {
+      if (ri % 2 === 1) { ctx.fillStyle = "#f6f8fa"; ctx.fillRect(padX, ry, tableW, rowH); }
+      ctx.font = fontOf(false);
+      r.forEach(function (cell, ci) {
+        var t = (cell && typeof cell === "object") ? cell.t : cell;
+        var color = (cell && typeof cell === "object" && cell.c) ? cell.c : "#2f3742";
+        var x = padX + sumW(ci);
+        ctx.fillStyle = color;
+        ctx.fillText(String(t == null ? "" : t), x + cellPadX, ry + (rowH - fontSize) / 2);
+      });
+      ctx.strokeStyle = "#e6e9ee"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padX, ry + rowH + 0.5); ctx.lineTo(padX + tableW, ry + rowH + 0.5); ctx.stroke();
+      ry += rowH;
+    });
+    // 外边框
+    ctx.strokeStyle = "#d7dce3"; ctx.lineWidth = 1;
+    ctx.strokeRect(padX + 0.5, y + 0.5, tableW - 1, headerH + rows.length * rowH - 1);
+    if (c.toBlob) {
+      c.toBlob(function (blob) {
+        if (blob) downloadBlob(blob, fname + ".png");
+        else showAlert("当前浏览器不支持导出图片");
+      }, "image/png");
+    } else {
+      // 兼容旧浏览器：dataURL 兜底
+      try {
+        var url = c.toDataURL("image/png");
+        var a = document.createElement("a"); a.href = url; a.download = fname + ".png";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      } catch (e) { showAlert("当前浏览器不支持导出图片"); }
+    }
+  }
   function exportCompare(fmt) {
     if (profiles.length === 0) { showAlert("暂无计划可导出"); return; }
     var valOf = function (row) { return cmpSort.key === "name" ? row.p.name : cmpSort.key === "roi" ? row.roi : row.s[cmpSort.key]; };
@@ -1528,21 +1605,20 @@
       html += data.map(function (row) { return "<tr>" + row.map(function (c) { return "<td>" + String(c) + "</td>"; }).join("") + "</tr>"; }).join("");
       html += "</table></body></html>";
       downloadBlob(new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" }), fname + ".xls");
-    } else if (fmt === "json") {
-      var obj = {
-        generatedAt: d.toISOString(),
-        sortBy: cmpSort.key,
-        plans: rows.map(function (row) {
-          return { name: row.p.name, count: row.s.count, input: r2(row.s.input), ret: r2(row.s.ret), net: r2(row.s.net), winRate: fmtPct(row.s.winRate), roi: fmtPct(row.roi) };
-        }),
-        total: { count: total.count, input: r2(total.input), ret: r2(total.ret), net: r2(total.net), winRate: fmtPct(total.winRate), roi: fmtPct(troi) }
-      };
-      downloadBlob(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json;charset=utf-8;" }), fname + ".json");
-    } else { // txt
-      var lines = [headers.join("\t")].concat(data.map(function (row) {
-        return row.map(function (c) { return String(c); }).join("\t");
-      }));
-      downloadBlob(new Blob([lines.join("\r\n")], { type: "text/plain;charset=utf-8;" }), fname + ".txt");
+    } else { // img：表格渲染为 PNG 图片
+      var imgRows = rows.map(function (row) {
+        return [
+          { t: row.p.name }, { t: row.s.count }, { t: r2(row.s.input) }, { t: r2(row.s.ret) },
+          { t: r2(row.s.net), c: numColor(row.s.net) },
+          { t: fmtPct(row.s.winRate) },
+          { t: fmtPct(row.roi), c: numColor(row.roi) }
+        ];
+      });
+      imgRows.push([
+        { t: "合计" }, { t: total.count }, { t: r2(total.input) }, { t: r2(total.ret) },
+        { t: r2(total.net), c: numColor(total.net) }, { t: fmtPct(total.winRate) }, { t: fmtPct(troi), c: numColor(troi) }
+      ]);
+      tableToPng("对比分析 · " + stamp, headers, imgRows, fname);
     }
   }
 
@@ -1573,19 +1649,15 @@
       html += rows.map(function (row) { return "<tr>" + row.map(function (c) { return "<td>" + String(c) + "</td>"; }).join("") + "</tr>"; }).join("");
       html += "</table></body></html>";
       downloadBlob(new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" }), fname + ".xls");
-    } else if (fmt === "json") {
-      var obj = {
-        generatedAt: d.toISOString(),
-        records: records.map(function (r) {
-          return { plan: getProfileName(r.profile), date: r.date, event: r.event, amount: r2(r.amount), odds: r2(r.odds), result: r.result, bonus: r2(r.bonus) };
-        })
-      };
-      downloadBlob(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json;charset=utf-8;" }), fname + ".json");
-    } else { // txt
-      var lines = [headers.join("\t")].concat(rows.map(function (row) {
-        return row.map(function (c) { return String(c); }).join("\t");
-      }));
-      downloadBlob(new Blob([lines.join("\r\n")], { type: "text/plain;charset=utf-8;" }), fname + ".txt");
+    } else { // img：表格渲染为 PNG 图片（结果列按红/黑着色）
+      var imgRows = rows.map(function (row) {
+        return [
+          { t: row[0] }, { t: row[1] }, { t: row[2] }, { t: row[3] }, { t: row[4] },
+          { t: row[5], c: resultColor(row[5]) },
+          { t: row[6] }
+        ];
+      });
+      tableToPng("投注记录 · " + stamp, headers, imgRows, fname);
     }
   }
 
