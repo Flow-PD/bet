@@ -87,7 +87,7 @@
   .seg input { display: none; }
   .seg label.red.on { background: var(--red-soft); border-color: var(--red); color: var(--red); }
   .seg label.black.on { background: var(--black-soft); border-color: var(--black); color: var(--black); }
-  .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 1px; }
+  .hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 1px; }
   .actions { display:flex; gap: 10px; margin-top: 4px; }
   .btn { border: none; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: transform .08s, opacity .15s; flex: 1; }
   .btn:active { transform: scale(.98); }
@@ -321,7 +321,7 @@
     .field input, .field select { font-size: 16px; padding: 12px; }
     .field input[type="date"] { font-size: 15px; padding: 10px 40px 10px 12px !important; }
     .seg label { font-size: 15px; padding: 12px 0; }
-    .hint { font-size: 12px; }
+    .hint { font-size: 11px; }
     .plan-bar { gap: 10px; }
     .plan-sel { gap: 8px; }
     .plan-label { font-size: 13px; }
@@ -384,7 +384,7 @@
         </div>
         <div class="field">
           <label for="f-event">赛事名称</label>
-          <input type="text" id="f-event" placeholder="例如：欧冠 皇马vs巴萨" required />
+          <input type="text" id="f-event" placeholder="例如：001 平平/平胜" required />
         </div>
         <div class="field">
           <label for="f-amount">投注金额</label>
@@ -405,7 +405,7 @@
           <span class="hint">选黑，本金照扣、奖金自动记 0</span>
         </div>
         <div class="field">
-          <label for="f-bonus">奖金（返还）</label>
+          <label for="f-bonus">奖金</label>
           <input type="number" id="f-bonus" placeholder="实得返还，如 1080" min="0" step="0.01" inputmode="decimal" required />
           <span class="hint">不填就按赔率自动算</span>
         </div>
@@ -529,19 +529,30 @@
   // 数字格式化：去尾随 0（1.50→1.5、2→2）
   function numStr(n) { return (Math.round((n || 0) * 100) / 100).toString(); }
 
-  // 由 金额 / 结果 / 赔率 / 奖金 推导最终存储值（赔率优先，否则由奖金反推）
+  // 由 金额 / 结果 / 赔率 / 奖金 推导最终存储值。
+  // 红单满足 奖金 = 金额 × 赔率；任意两者已知即可反推第三者（含由「奖金+赔率」反推「金额」）。
   function deriveMoney(A, result, oddsRaw, bonusRaw) {
     A = parseFloat(A) || 0;
-    if (!isNaN(oddsRaw) && oddsRaw > 0 && A > 0) {
-      return { odds: Math.round(oddsRaw * 100) / 100, bonus: result === "红" ? Math.round(A * oddsRaw * 100) / 100 : 0 };
+    var O = parseFloat(oddsRaw) || 0;
+    var B = parseFloat(bonusRaw) || 0;
+    if (result === "黑") {
+      return { amount: A, odds: O, bonus: 0 };   // 黑单：奖金记 0，赔率保留手动值，金额以输入为准
     }
-    if (!isNaN(bonusRaw) && A > 0) {
-      return { odds: Math.round((bonusRaw / A) * 100) / 100, bonus: Math.round(bonusRaw * 100) / 100 };
+    if (A > 0 && O > 0) {
+      return { amount: A, odds: Math.round(O * 100) / 100, bonus: Math.round(A * O * 100) / 100 };
     }
-    return { odds: 0, bonus: 0 };
+    if (A > 0 && B > 0) {
+      return { amount: A, odds: Math.round((B / A) * 100) / 100, bonus: Math.round(B * 100) / 100 };
+    }
+    if (A === 0 && O > 0 && B > 0) {
+      var amt = Math.round((B / O) * 100) / 100;   // 仅填了赔率+奖金 → 反推本金
+      return { amount: amt, odds: Math.round(O * 100) / 100, bonus: Math.round(B * 100) / 100 };
+    }
+    return { amount: A, odds: O, bonus: B };
   }
 
   // 金额 / 赔率 / 奖金 三字段双向联动：anchor 为最后编辑的字段
+  // 任意两字段已知即可反推第三字段（含由「奖金 + 赔率」反推「投注金额」）
   function recalcTriple(anchor, els, result) {
     var A = parseFloat(els.amount.value) || 0;
     var O = parseFloat(els.odds.value) || 0;
@@ -555,8 +566,10 @@
       else if (A > 0 && B > 0) els.odds.value = numStr(Math.round((B / A) * 100) / 100);
     } else if (anchor === "bonus") {
       if (A > 0 && B > 0) els.odds.value = numStr(Math.round((B / A) * 100) / 100);
+      else if (O > 0 && A === 0) els.amount.value = numStr(Math.round((B / O) * 100) / 100);  // 由奖金+赔率反推本金
     } else if (anchor === "odds") {
       if (A > 0 && O > 0) els.bonus.value = numStr(Math.round(A * O * 100) / 100);
+      else if (B > 0 && O > 0) els.amount.value = numStr(Math.round((B / O) * 100) / 100);  // 由奖金+赔率反推本金
     }
   }
   function escapeHtml(s) {
@@ -621,7 +634,7 @@
         '<div class="dup-f"><label>结果</label><select id="dup' + side + '-result">' +
           '<option value="红"' + (rec.result === "红" ? " selected" : "") + ">红</option>" +
           '<option value="黑"' + (rec.result === "黑" ? " selected" : "") + ">黑</option></select></div>" +
-        '<div class="dup-f"><label>奖金（返还）</label><input type="number" id="dup' + side + '-bonus" step="0.01" value="' + (rec.bonus || 0) + '" /></div>' +
+        '<div class="dup-f"><label>奖金</label><input type="number" id="dup' + side + '-bonus" step="0.01" value="' + (rec.bonus || 0) + '" /></div>' +
         '<div class="dup-net" id="dup' + side + '-net"></div>' +
         "</div>";
     }
@@ -685,7 +698,7 @@
       profile: document.getElementById("dup" + side + "-profile").value,
       date: document.getElementById("dup" + side + "-date").value,
       event: (document.getElementById("dup" + side + "-event").value || "").trim(),
-      amount: amount,
+      amount: dm.amount,
       odds: dm.odds,
       result: result,
       bonus: dm.bonus
@@ -968,7 +981,7 @@
         '<label class="red' + (r.result === "红" ? " on" : "") + '"><input type="radio" name="m-result" value="红"' + (r.result === "红" ? " checked" : "") + ' /><span>红 (命中)</span></label>' +
         '<label class="black' + (r.result === "黑" ? " on" : "") + '"><input type="radio" name="m-result" value="黑"' + (r.result === "黑" ? " checked" : "") + ' /><span>黑 (未中)</span></label>' +
       '</div>' +
-      '<div class="modal-label">奖金（返还）</div>' +
+      '<div class="modal-label">奖金</div>' +
       '<input class="modal-input" id="m-bonus" type="number" min="0" step="0.01" value="' + (parseFloat(r.bonus) || 0) + '" />';
     openModal(mHtml, [
       { label: "取消" },
@@ -982,7 +995,7 @@
         var dm = deriveMoney(na, nr,
           parseFloat(document.getElementById("m-odds").value),
           parseFloat(document.getElementById("m-bonus").value));
-        r.profile = np; r.date = nd; r.event = ne; r.amount = na; r.odds = dm.odds; r.bonus = dm.bonus; r.result = nr;
+        r.profile = np; r.date = nd; r.event = ne; r.amount = dm.amount; r.odds = dm.odds; r.bonus = dm.bonus; r.result = nr;
         saveRecords(); renderAll();
       } }
     ]);
@@ -1039,7 +1052,7 @@
       profile: (currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : ""),
       date: document.getElementById("f-date").value,
       event: document.getElementById("f-event").value.trim(),
-      amount: parseFloat(document.getElementById("f-amount").value) || 0,
+      amount: dm.amount,
       odds: dm.odds,
       result: res,
       bonus: dm.bonus
