@@ -25,6 +25,9 @@
   #auth-ui .auth-btn:hover { opacity: .9; }
   #auth-ui .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
   #auth-ui .auth-err { color: var(--red); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
+  #auth-ui .auth-checks { margin-bottom: 8px; text-align: left; }
+  #auth-ui .auth-check { display: block; font-size: 12.5px; color: var(--muted); cursor: pointer; padding: 4px 0; user-select: none; }
+  #auth-ui .auth-check input { margin-right: 6px; vertical-align: middle; accent-color: var(--brand); }
   #auth-ui .auth-note { margin-top: 20px; font-size: 12px; color: var(--muted); line-height: 1.6; }
 
   /* 用户栏（顶栏内） */
@@ -693,6 +696,10 @@
     </div>
     <div class="auth-field"><label for="auth-email">邮箱</label><input type="email" id="auth-email" placeholder="your@email.com" /></div>
     <div class="auth-field"><label for="auth-pass">密码</label><input type="password" id="auth-pass" placeholder="至少 6 位" /></div>
+    <div class="auth-checks">
+      <label class="auth-check"><input type="checkbox" id="auth-remember-acc" checked /> 记住账号</label>
+      <label class="auth-check"><input type="checkbox" id="auth-remember-pass" /> 记住密码（下次自动登录）</label>
+    </div>
     <button class="auth-btn" id="auth-submit-btn">登录</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-note">不同设备登录同一账号，数据自动同步。<br>首次使用请先「注册」，之后用「登录」。</div>
@@ -902,8 +909,24 @@
     document.getElementById("auth-ui").classList.remove("hidden");
     document.getElementById("app-ui").classList.add("hidden");
     document.getElementById("auth-err").textContent = "";
-    document.getElementById("auth-email").value = "";
+    // 恢复已保存的账号/密码
+    var savedAcc = localStorage.getItem("bet_saved_acc");
+    var savedPass = localStorage.getItem("bet_saved_pass");
+    document.getElementById("auth-email").value = savedAcc || "";
     document.getElementById("auth-pass").value = "";
+    document.getElementById("auth-remember-acc").checked = !!savedAcc;
+    if (savedAcc && savedPass) {
+      document.getElementById("auth-remember-pass").checked = true;
+      document.getElementById("auth-pass").value = savedPass;
+      // 勾了"记住密码"→ 自动登录
+      setTimeout(function () {
+        if (document.getElementById("auth-email").value && document.getElementById("auth-pass").value) {
+          document.getElementById("auth-submit-btn").click();
+        }
+      }, 200);
+    } else {
+      document.getElementById("auth-remember-pass").checked = false;
+    }
   }
 
   function showAppUI() {
@@ -969,6 +992,12 @@
       errEl.textContent = (authMode === "login" ? "登录" : "注册") + "失败：" + errMsg;
       btn.disabled = false;
       btn.textContent = authMode === "login" ? "登录" : "注册";
+      // 自动登录失败（密码过期/改了），清除记住的密码避免死循环
+      if (authMode === "login" && document.getElementById("auth-remember-pass").checked) {
+        try { localStorage.removeItem("bet_saved_pass"); } catch (e) {}
+        document.getElementById("auth-remember-pass").checked = false;
+        document.getElementById("auth-pass").value = "";
+      }
       return;
     }
 
@@ -978,6 +1007,20 @@
       btn.disabled = false;
       btn.textContent = "注册";
       return;
+    }
+
+    // 登录成功：保存账号/密码
+    var rememberAcc = document.getElementById("auth-remember-acc").checked;
+    var rememberPass = document.getElementById("auth-remember-pass").checked;
+    if (rememberAcc) {
+      try { localStorage.setItem("bet_saved_acc", email); } catch (e) {}
+    } else {
+      try { localStorage.removeItem("bet_saved_acc"); } catch (e) {}
+    }
+    if (rememberAcc && rememberPass) {
+      try { localStorage.setItem("bet_saved_pass", pass); } catch (e) {}
+    } else {
+      try { localStorage.removeItem("bet_saved_pass"); } catch (e) {}
     }
 
     await onSignedIn();
@@ -990,6 +1033,7 @@
 
   document.getElementById("logout-btn").addEventListener("click", async function () {
     await supabase.auth.signOut();
+    try { localStorage.removeItem("bet_saved_pass"); } catch (e) {}  // 登出时清除记住的密码
     showAuthUI();
     setSyncDot("off");
   });
@@ -1057,10 +1101,10 @@
     });
     if (profiles.length === 0) {
       var defaultId = uid();
-      profiles.push({ id: defaultId, name: "我自己", color: PALETTE[0] });
+      profiles.push({ id: defaultId, name: "暴富计划", color: PALETTE[0] });
       // 同步默认计划到云端
       var { error: ierr } = await supabase.from("profiles").upsert({
-        id: defaultId, user_id: user.id, name: "我自己", color: PALETTE[0]
+        id: defaultId, user_id: user.id, name: "暴富计划", color: PALETTE[0]
       });
       if (ierr) console.warn("save default profile failed", ierr);
     }
@@ -1079,6 +1123,12 @@
     records.forEach(function (r) {
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
+    // 恢复上次选中的计划（默认进第一个计划，而非"全部"）
+    try {
+      var sv = localStorage.getItem(VIEW_KEY);
+      if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
+      else currentView = profiles[0] ? profiles[0].id : "all";
+    } catch (e) {}
   }
 
   function loadFromLocal() {
@@ -1086,14 +1136,14 @@
     try { records = JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { records = []; }
     if (!Array.isArray(profiles)) profiles = [];
     if (!Array.isArray(records)) records = [];
-    if (profiles.length === 0) { profiles.push({ id: uid(), name: "我自己", color: PALETTE[0] }); saveProfiles(); }
+    if (profiles.length === 0) { profiles.push({ id: uid(), name: "暴富计划", color: PALETTE[0] }); saveProfiles(); }
     records.forEach(function (r) {
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
     try {
       var sv = localStorage.getItem(VIEW_KEY);
-      if (sv === "all") currentView = "all";
-      else if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
+      if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
+      else currentView = profiles[0] ? profiles[0].id : "all";  // 默认进第一个计划，而非"全部"
     } catch (e) {}
   }
 
@@ -1316,7 +1366,7 @@
   function findOrCreateProfile(name) {
     name = (name || "").trim();
     if (!name) {
-      if (profiles.length === 0) profiles.push({ id: uid(), name: "我自己", color: nextColor() });
+      if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() });
       return profiles[0].id;
     }
     var p = profiles.find(function (x) { return x.name.toLowerCase() === name.toLowerCase(); });
@@ -2313,7 +2363,7 @@
         });
         // 导入后清理「没有任何记录」的空账本，避免对比表出现空占位
         profiles = profiles.filter(function (p) { return records.some(function (r) { return r.profile === p.id; }); });
-        if (profiles.length === 0) { profiles.push({ id: uid(), name: "我自己", color: PALETTE[0] }); }
+        if (profiles.length === 0) { profiles.push({ id: uid(), name: "暴富计划", color: PALETTE[0] }); }
         saveProfiles(); saveRecords(); renderAll();
         showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个计划）");
       } catch (err) { showAlert("导入失败：" + err.message); }
@@ -2382,7 +2432,7 @@
       }
       var pid = map.profile !== undefined ? findOrCreateProfile(get("profile")) : defaultProfile;
       if (!pid) {
-        if (profiles.length === 0) profiles.push({ id: uid(), name: "我自己", color: nextColor() });
+        if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() });
         pid = profiles[0].id;
       }
       out.push({
@@ -2416,7 +2466,7 @@
       else bonus = Math.round(bonusRaw * 100) / 100;
       var pname = o.profile != null ? o.profile : o.plan != null ? o.plan : o.账本 != null ? o.账本 : o.计划;
       var pid = (pname != null && String(pname).trim() !== "") ? findOrCreateProfile(String(pname).trim()) : defaultProfile;
-      if (!pid) { if (profiles.length === 0) profiles.push({ id: uid(), name: "我自己", color: nextColor() }); pid = profiles[0].id; }
+      if (!pid) { if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() }); pid = profiles[0].id; }
       out.push({
         id: uid(),
         profile: pid,
