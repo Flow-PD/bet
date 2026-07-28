@@ -6,7 +6,7 @@
 <title>个人投注记录</title>
 <style>
   :root {
-    --bg: #f4f6fb;
+    --bg: linear-gradient(135deg, #eef2f8 0%, #f2f5fb 50%, #e9eef5 100%);
     --card: #ffffff;
     --text: #1f2733;
     --muted: #8a93a3;
@@ -280,7 +280,7 @@
   /* 历史记录操作栏：导入 / 导出(下拉) / 清空 三个同尺寸、同风格（两字、定宽居中），适配手机 */
   .history-bar .plan-ops .mini,
   #hist-export-wrap .c-select-trigger {
-    min-width: 78px; justify-content: center; text-align: center; box-sizing: border-box;
+    min-width: 92px; justify-content: center; text-align: center; box-sizing: border-box;
   }
   #hist-export-wrap .c-select-trigger {
     /* 与 .mini 完全一致的视觉框：边框/圆角/字号/字重；左右内边距对称，使「导出」真正居中 */
@@ -481,14 +481,14 @@
     .history-bar .filters .pill { padding: 6px 9px; font-size: 12.5px; }
     .history-bar .plan-ops { gap: 6px; }
     .history-bar .plan-ops .mini,
-    #hist-export-wrap .c-select-trigger { min-width: 64px; font-size: 12.5px; }
+    #hist-export-wrap .c-select-trigger { min-width: 72px; font-size: 12.5px; }
     #hist-export-wrap .c-select-trigger { padding: 8px 22px 8px 22px; }
     .cmp-head .c-select-trigger { font-size: 12.5px; }
   }
 
   /* ============ 夜间模式 ============ */
   html[data-theme="dark"] {
-    --bg: #14181f; --card: #1c222b; --text: #e6e9ef; --muted: #93a0b4;
+    --bg: linear-gradient(135deg, #1c2533 0%, #14181f 55%, #10141b 100%); --card: #1c222b; --text: #e6e9ef; --muted: #93a0b4;
     --line: #2c3441; --brand-soft: #1f2a44; --red-soft: #3a2326; --black-soft: #262d38;
     --shadow: 0 6px 24px rgba(0,0,0,.40);
     /* 夜间：顶部栏与面板恢复深色，结构性强调色转为浅中性 */
