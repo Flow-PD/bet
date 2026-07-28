@@ -157,6 +157,8 @@
     transition: border-color .15s, box-shadow .15s; font-family: inherit;
   }
   .field input:focus, .field select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background:#fff; }
+  /* 黑单时奖金框只读（固定 0），灰色禁用外观提示用户无需编辑 */
+  .field input[readonly] { background: var(--line); color: var(--muted); opacity: .65; cursor: not-allowed; }
   /* 表单内的自定义下拉：与同卡片的输入框尺寸 / 边框 / 字号完全一致 */
   .field .c-select { width: 100%; }
   .field .c-select-trigger {
@@ -591,6 +593,20 @@
   html[data-theme="dark"] .topbar .c-drop .c-opt:hover { background: #eef1f5; color: #1f2733; }
   html[data-theme="dark"] .topbar .c-drop .c-opt.active { background: #cdd5e0; color: #1a1f27; }
 
+  /* 对比分析的两个下拉（净盈亏排序 / 导出对比）夜间也用白底深字，和顶栏下拉、按钮一致 */
+  html[data-theme="dark"] #cmp-sort-wrap .c-select-trigger,
+  html[data-theme="dark"] #cmp-sort-wrap.open .c-select-trigger,
+  html[data-theme="dark"] #cmp-export-wrap .c-select-trigger,
+  html[data-theme="dark"] #cmp-export-wrap.open .c-select-trigger { background-color: rgba(255,255,255,.94); color: #1f2733; border-color: transparent; }
+  html[data-theme="dark"] #cmp-sort-wrap .c-drop,
+  html[data-theme="dark"] #cmp-export-wrap .c-drop { background: #fff; color: #1f2733; border-color: var(--line); }
+  html[data-theme="dark"] #cmp-sort-wrap .c-drop .c-opt,
+  html[data-theme="dark"] #cmp-export-wrap .c-drop .c-opt { color: #1f2733; }
+  html[data-theme="dark"] #cmp-sort-wrap .c-drop .c-opt:hover,
+  html[data-theme="dark"] #cmp-export-wrap .c-drop .c-opt:hover { background: #eef1f5; color: #1f2733; }
+  html[data-theme="dark"] #cmp-sort-wrap .c-drop .c-opt.active,
+  html[data-theme="dark"] #cmp-export-wrap .c-drop .c-opt.active { background: #cdd5e0; color: #1a1f27; }
+
   /* 表格 / 对比卡片在夜间 */
   html[data-theme="dark"] table.cmp th { background: #232b36; color: var(--text); }
   html[data-theme="dark"] table.cmp td { color: var(--text); }
@@ -924,8 +940,7 @@
     var O = parseFloat(els.odds.value) || 0;
     var B = parseFloat(els.bonus.value) || 0;
     if (result === "黑") {
-      if (els.bonus.value === "" || B === 0) els.bonus.value = "0";
-      return;
+      return;   // 黑单奖金固定 0（由 syncSeg 设为只读），不联动，允许奖金框保持 "0" 或手动清空后保存时自动记 0
     }
     if (anchor === "amount") {
       if (O > 0) els.bonus.value = numStr(Math.round(A * O * 100) / 100);
@@ -1511,10 +1526,12 @@
     document.querySelectorAll('#m-seg input').forEach(function (el) {
       el.addEventListener("change", function () {
         document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
-        if (getMResult() === "黑") { if (mEls.bonus.value === "") mEls.bonus.value = "0"; }
-        else { var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
+        if (getMResult() === "黑") { mEls.bonus.value = "0"; mEls.bonus.readOnly = true; }
+        else { mEls.bonus.readOnly = false; var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); else if (mEls.bonus.value === "0") mEls.bonus.value = ""; }
       });
     });
+    // 打开弹窗时根据当前结果初始化奖金框只读状态
+    if (getMResult() === "黑") { mEls.bonus.readOnly = true; }
   }
 
   // ---------- form ----------
@@ -1533,8 +1550,17 @@
     var val = getAddResult();
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
-    if (val === "黑") { if (addEls.bonus.value === "") addEls.bonus.value = "0"; }
-    else { if (addEls.bonus.value === "") { var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0; if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100); } }
+    if (val === "黑") {
+      addEls.bonus.value = "0";
+      addEls.bonus.readOnly = true;   // 黑单无奖金，固定 0 且只读，避免反复被填回
+    } else {
+      addEls.bonus.readOnly = false;  // 红单可编辑
+      if (addEls.bonus.value === "" || addEls.bonus.value === "0") {
+        var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0;
+        if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100);
+        else addEls.bonus.value = "";   // 无赔率时清空，让用户手动填
+      }
+    }
   }
   // 奖金驱动结果：填 0 / 留空 → 自动判黑；填非零金额 → 自动判红
   function autoResultFromBonus() {
