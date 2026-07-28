@@ -22,9 +22,11 @@
     --radius: 16px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* 强制所有表单控件继承界面字体，避免手机 WebView 把原生控件渲染成宋体/楷体 */
+  input, button, select, textarea { font-family: inherit; }
   html, body { margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
@@ -279,15 +281,17 @@
 
   /* 日期输入框：弱化原生控件外观，与普通输入框统一 */
   .field input[type="date"] {
-    appearance: none; -webkit-appearance: none;
+    appearance: none; -webkit-appearance: none; -moz-appearance: textfield;
+    position: relative;            /* 关键：让内部绝对定位的日历图标限制在框内，不再溢出白底框 */
+    font-family: inherit;          /* 与界面其他文字统一字体，避免手机端被渲染成宋体/楷体 */
     color-scheme: normal;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a93a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>");
     background-repeat: no-repeat; background-position: right 11px center;
-    padding-right: 36px !important;
+    padding-right: 40px !important;
   }
   .field input[type="date"]::-webkit-calendar-picker-indicator {
     opacity: 0; cursor: pointer;
-    position: absolute; right: 0; width: 36px; height: 100%;
+    position: absolute; top: 0; right: 0; width: 40px; height: 100%;
   }
 
   /* 可编辑赔率字段：强调可交互 */
@@ -315,7 +319,7 @@
     .field label { font-size: 15px; }
     /* 16px 字号避免 iOS 聚焦时页面缩放 */
     .field input, .field select { font-size: 16px; padding: 12px; }
-    .field input[type="date"] { font-size: 15px; padding: 10px 36px 10px 12px !important; }
+    .field input[type="date"] { font-size: 15px; padding: 10px 40px 10px 12px !important; }
     .seg label { font-size: 15px; padding: 12px 0; }
     .hint { font-size: 12px; }
     .plan-bar { gap: 10px; }
