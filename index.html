@@ -300,7 +300,7 @@
     animation: dropIn .18s ease;
   }
   /* 蓝区内的下拉：z-index 提升到更高，确保不被下方统计格遮挡 */
-  .topbar .c-drop { z-index: 9999; }
+  .topbar .c-drop { z-index: 9999; min-width: 0; }
   @keyframes dropIn { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
   .c-select.open .c-drop { display: block; }
   .c-opt {
