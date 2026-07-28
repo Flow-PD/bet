@@ -134,10 +134,10 @@
   .roi-mini { position: relative; display:block; height: 6px; margin-top: 5px; background: rgba(31,39,51,.08); border-radius: 99px; }
   .roi-mini::after { content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background: rgba(31,39,51,.32); transform: translateX(-1px); border-radius:2px; }
   .roi-mini > i { position:absolute; top:0; bottom:0; border-radius:99px; }
-  /* 胜率三区：危险(0-30%)红 / 警示(30-40%)琥珀 / 安全(≥40%)绿 */
-  .wr-danger { color: var(--red) !important; }
+  /* 胜率三区：低(0-30%)绿 / 警示(30-40%)琥珀 / 安全(≥40%)红 */
+  .wr-danger { color: var(--green) !important; }
   .wr-warn { color: #f5a623 !important; }
-  .wr-safe { color: var(--green) !important; }
+  .wr-safe { color: var(--red) !important; }
 
   /* Section card */
   .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-top: 18px; }
@@ -157,8 +157,6 @@
     transition: border-color .15s, box-shadow .15s; font-family: inherit;
   }
   .field input:focus, .field select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background:#fff; }
-  /* 黑单时奖金框只读（固定 0），灰色禁用外观提示用户无需编辑 */
-  .field input[readonly] { background: var(--line); color: var(--muted); opacity: .65; cursor: not-allowed; }
   /* 表单内的自定义下拉：与同卡片的输入框尺寸 / 边框 / 字号完全一致 */
   .field .c-select { width: 100%; }
   .field .c-select-trigger {
@@ -704,12 +702,12 @@
         </div>
         <div class="field">
           <label for="f-odds">赔率</label>
-          <input type="number" id="f-odds" placeholder="如 1.85，可手动输入" min="0" step="0.01" inputmode="decimal" />
+          <input type="number" id="f-odds" placeholder="如 2.88，可手动输入" min="0" step="0.01" inputmode="decimal" />
           <span class="hint">不填就按奖金自动算</span>
         </div>
         <div class="field">
           <label for="f-bonus">奖金</label>
-          <input type="number" id="f-bonus" placeholder="如 8888" min="0" step="0.01" inputmode="decimal" required />
+          <input type="number" id="f-bonus" placeholder="如 8888" min="0" step="0.01" inputmode="decimal" />
           <span class="hint">填 0 或留空自动判「黑」，填金额自动判「红」</span>
         </div>
         <div class="field">
@@ -1526,12 +1524,10 @@
     document.querySelectorAll('#m-seg input').forEach(function (el) {
       el.addEventListener("change", function () {
         document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
-        if (getMResult() === "黑") { mEls.bonus.value = "0"; mEls.bonus.readOnly = true; }
-        else { mEls.bonus.readOnly = false; var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); else if (mEls.bonus.value === "0") mEls.bonus.value = ""; }
+        if (getMResult() === "黑") { mEls.bonus.value = ""; }
+        else { var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
       });
     });
-    // 打开弹窗时根据当前结果初始化奖金框只读状态
-    if (getMResult() === "黑") { mEls.bonus.readOnly = true; }
   }
 
   // ---------- form ----------
@@ -1551,14 +1547,11 @@
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
     if (val === "黑") {
-      addEls.bonus.value = "0";
-      addEls.bonus.readOnly = true;   // 黑单无奖金，固定 0 且只读，避免反复被填回
+      addEls.bonus.value = "";   // 黑单无奖金：清空奖金框，用户可直接输入奖金触发自动切红
     } else {
-      addEls.bonus.readOnly = false;  // 红单可编辑
-      if (addEls.bonus.value === "" || addEls.bonus.value === "0") {
+      if (addEls.bonus.value === "") {
         var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0;
         if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100);
-        else addEls.bonus.value = "";   // 无赔率时清空，让用户手动填
       }
     }
   }
@@ -1714,7 +1707,7 @@
     return n > 0 ? "#e83b3b" : "#1ba672";
   }
   function resultColor(s) { return s === "红" ? "#e83b3b" : s === "黑" ? "#1ba672" : "#5b6472"; }
-  // 胜率三区：危险(0-30%) / 警示(30-40%) / 安全(≥40%)
+  // 胜率三区：低(0-30%)绿 / 警示(30-40%)琥珀 / 安全(≥40%)红
   function winRateClass(wr) {
     var p = (wr || 0) * 100;
     if (p < 30) return "wr-danger";
