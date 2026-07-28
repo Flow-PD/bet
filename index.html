@@ -80,11 +80,27 @@
   .topbar .sub { font-size: 12.5px; color: var(--topbar-fg); opacity: .68; margin-bottom: 14px; text-align: center; letter-spacing: .3px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   @media (min-width: 560px) { .stats { grid-template-columns: repeat(3, 1fr); } }
-  .stat { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 12px; box-shadow: 0 1px 3px rgba(31,39,51,.05); }
+  .stat { position: relative; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 12px; box-shadow: 0 1px 3px rgba(31,39,51,.05); }
   .stat .label { font-size: 12.5px; color: var(--topbar-fg); opacity: .66; margin-bottom: 6px; font-weight: 600; letter-spacing: .3px; }
   .stat .value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
   .stat .value.pos { color: var(--red); }     /* 盈利 = 红（与列表、对比表同一红） */
   .stat .value.neg { color: var(--green); }   /* 亏 = 绿（与列表、对比表同一绿） */
+  /* 连红/连黑：悬停提示 + 数字强化 */
+  .stat .label.tip { cursor: help; display: inline-block; position: relative; border-bottom: 1px dashed rgba(127,140,160,.6); }
+  .stat .label.tip::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; top: 100%;
+    transform: translateX(-50%) translateY(8px);
+    margin-top: 4px;
+    background: #1f2630; color: #fff;
+    font-size: 11px; font-weight: 500; line-height: 1.5; letter-spacing: .2px;
+    padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+    opacity: 0; pointer-events: none; z-index: 40;
+    box-shadow: 0 8px 22px rgba(0,0,0,.28);
+    transition: opacity .15s ease, transform .15s ease;
+  }
+  .stat:hover .label.tip::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .stat .value.streak-on { font-weight: 800; }
   .winbar-wrap {
     margin-top: 14px;
     background: var(--panel-bg); border: 1px solid var(--panel-border);
@@ -594,8 +610,8 @@
     <div class="stats">
       <div class="stat"><div class="label">总投入</div><div class="value" id="s-input">¥0</div></div>
       <div class="stat"><div class="label">总中奖金额</div><div class="value" id="s-return">¥0</div></div>
-      <div class="stat"><div class="label">连红</div><div class="value" id="s-streak-red">0</div></div>
-      <div class="stat"><div class="label">连黑</div><div class="value" id="s-streak-black">0</div></div>
+      <div class="stat"><div class="label tip" id="lab-streak-red">连红</div><div class="value" id="s-streak-red">0</div></div>
+      <div class="stat"><div class="label tip" id="lab-streak-black">连黑</div><div class="value" id="s-streak-black">0</div></div>
       <div class="stat"><div class="label">净盈亏</div><div class="value" id="s-net">¥0</div></div>
       <div class="stat"><div class="label">胜率</div><div class="value" id="s-win">0%</div></div>
     </div>
@@ -1044,10 +1060,27 @@
     var st = computeStreaks(rs);
     var sRed = document.getElementById("s-streak-red");
     var sBlack = document.getElementById("s-streak-black");
+    var labRed = document.getElementById("lab-streak-red");
+    var labBlack = document.getElementById("lab-streak-black");
     sRed.textContent = String(st.red);
     sBlack.textContent = String(st.black);
-    sRed.style.color = st.red >= 1 ? "var(--red)" : "";
-    sBlack.style.color = st.black >= 1 ? "var(--black)" : "";
+    // 连红：激活时红色 + 加粗 + 辉光
+    if (st.red >= 1) {
+      sRed.style.color = "var(--red)";
+      sRed.style.fontWeight = "800";
+      sRed.style.textShadow = "0 0 12px rgba(232,59,59,.42)";
+    } else { sRed.style.color = ""; sRed.style.fontWeight = ""; sRed.style.textShadow = ""; }
+    // 连黑：激活时深色 + 加粗 + 辉光
+    if (st.black >= 1) {
+      sBlack.style.color = "var(--black)";
+      sBlack.style.fontWeight = "800";
+      sBlack.style.textShadow = "0 0 12px rgba(43,51,64,.30)";
+    } else { sBlack.style.color = ""; sBlack.style.fontWeight = ""; sBlack.style.textShadow = ""; }
+    // 悬停提示（鼠标移到标签上显示最近连续次数）
+    var tipRed = "最近连续命中：" + st.red + " 次";
+    var tipBlack = "最近连续未中：" + st.black + " 次";
+    labRed.setAttribute("data-tip", tipRed); labRed.setAttribute("title", tipRed);
+    labBlack.setAttribute("data-tip", tipBlack); labBlack.setAttribute("title", tipBlack);
   }
 
   // ---------- plan UI ----------
