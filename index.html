@@ -4,7 +4,46 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>个人投注记录</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
+  /* 登录 / 注册界面 */
+  #auth-ui { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  #auth-ui .auth-card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    width: 100%; max-width: 380px; padding: 32px 28px; text-align: center;
+  }
+  #auth-ui .auth-card h2 { margin: 0 0 4px; font-size: 22px; color: var(--text); }
+  #auth-ui .auth-card .auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  #auth-ui .auth-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  #auth-ui .auth-tab { flex: 1; padding: 10px; border: none; background: var(--card); color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
+  #auth-ui .auth-tab.on { background: var(--brand); color: #fff; }
+  #auth-ui .auth-field { margin-bottom: 14px; text-align: left; }
+  #auth-ui .auth-field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  #auth-ui .auth-field input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; outline: none; transition: border-color .15s; background: var(--card); color: var(--text); font-family: inherit; }
+  #auth-ui .auth-field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  #auth-ui .auth-btn { width: 100%; padding: 12px; margin-top: 4px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
+  #auth-ui .auth-btn:hover { opacity: .9; }
+  #auth-ui .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+  #auth-ui .auth-err { color: var(--red); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
+  #auth-ui .auth-note { margin-top: 20px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* 用户栏（顶栏内） */
+  .user-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; }
+  .user-bar .user-email { font-size: 12px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-bar .user-btn { border: 1px solid var(--line); background: var(--card); color: var(--muted); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
+  .user-bar .user-btn:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+  .user-bar .user-btn.migrate { color: var(--brand); border-color: var(--brand); }
+  .user-bar .user-btn.migrate:hover { background: var(--brand-soft); }
+  .user-bar .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; transition: background .3s; }
+  .user-bar .sync-dot.syncing { background: #f5a623; animation: pulse .8s infinite; }
+  .user-bar .sync-dot.error { background: var(--red); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+  /* 应用主体默认隐藏，登录后才显示 */
+  #app-ui.hidden { display: none; }
+  /* 登录 UI 默认显示 */
+  #auth-ui.hidden { display: none; }
+
   :root {
     --bg: linear-gradient(135deg, #eef2f8 0%, #f2f5fb 50%, #e9eef5 100%);
     --card: #ffffff;
@@ -642,10 +681,36 @@
 </style>
 </head>
 <body>
+
+<!-- ===== 登录 / 注册界面 ===== -->
+<div id="auth-ui">
+  <div class="auth-card">
+    <h2>个人投注记录</h2>
+    <div class="auth-sub">登录或注册以同步数据到云端</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="auth-tab-login">登录</button>
+      <button class="auth-tab" id="auth-tab-signup">注册</button>
+    </div>
+    <div class="auth-field"><label for="auth-email">邮箱</label><input type="email" id="auth-email" placeholder="your@email.com" /></div>
+    <div class="auth-field"><label for="auth-pass">密码</label><input type="password" id="auth-pass" placeholder="至少 6 位" /></div>
+    <button class="auth-btn" id="auth-submit-btn">登录</button>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="auth-note">不同设备登录同一账号，数据自动同步。<br>首次使用请先「注册」，之后用「登录」。</div>
+  </div>
+</div>
+
+<!-- ===== 应用主体（登录后可见） ===== -->
+<div id="app-ui" class="hidden">
   <div class="ptr" id="ptr"><span class="ptr-ico"></span><span class="ptr-txt">下拉刷新</span></div>
   <button class="theme-fab" id="theme-toggle" type="button" title="切换日间 / 夜间模式" aria-label="切换日间 / 夜间模式">🌙</button>
   <div class="page" id="page">
   <div class="topbar">
+   <div class="user-bar">
+     <span class="sync-dot" id="sync-dot" title="云端同步状态"></span>
+     <span class="user-email" id="user-email"></span>
+     <button class="user-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地</button>
+     <button class="user-btn" id="logout-btn">登出</button>
+   </div>
    <div class="topbar-inner">
     <h1>个人投注记录</h1>
     <div class="sub" id="view-sub">全部记录</div>
@@ -772,7 +837,7 @@
       <div class="list" id="list"></div>
     </div>
 
-    <div class="foot">数据仅保存在本机浏览器中 · 建议定期导出 CSV 备份</div>
+    <div class="foot">数据云端同步中 · 登录同一账号即可跨设备访问 · 建议定期导出 CSV 备份</div>
   </div>
   </div>
 
@@ -794,6 +859,229 @@
 <script>
 (function () {
   "use strict";
+
+  // ========== Supabase 云端存储 ==========
+  var SUPABASE_URL = "https://upmxiggfbljcapjbbyqp.supabase.co";
+  var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwbXhpZ2dmYmxqY2FwamJieXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDI0MDcsImV4cCI6MjEwMDgxODQwN30.Iyy7Ad5PhodN1_PpFTr4kd_5UZk1xxEduKCOya4jA5E";
+  var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var cloudReady = false;
+
+  // ========== 认证 ==========
+  var authMode = "login"; // "login" | "signup"
+
+  function showAuthUI() {
+    document.getElementById("auth-ui").classList.remove("hidden");
+    document.getElementById("app-ui").classList.add("hidden");
+    document.getElementById("auth-err").textContent = "";
+    document.getElementById("auth-email").value = "";
+    document.getElementById("auth-pass").value = "";
+  }
+
+  function showAppUI() {
+    document.getElementById("auth-ui").classList.add("hidden");
+    document.getElementById("app-ui").classList.remove("hidden");
+  }
+
+  function setAuthTab(mode) {
+    authMode = mode;
+    document.getElementById("auth-tab-login").classList.toggle("on", mode === "login");
+    document.getElementById("auth-tab-signup").classList.toggle("on", mode === "signup");
+    document.getElementById("auth-submit-btn").textContent = mode === "login" ? "登录" : "注册";
+    document.getElementById("auth-err").textContent = "";
+  }
+
+  document.getElementById("auth-tab-login").addEventListener("click", function () { setAuthTab("login"); });
+  document.getElementById("auth-tab-signup").addEventListener("click", function () { setAuthTab("signup"); });
+
+  document.getElementById("auth-submit-btn").addEventListener("click", async function () {
+    var email = document.getElementById("auth-email").value.trim();
+    var pass = document.getElementById("auth-pass").value;
+    var errEl = document.getElementById("auth-err");
+    var btn = document.getElementById("auth-submit-btn");
+
+    if (!email || !pass) { errEl.textContent = "请填写邮箱和密码"; return; }
+    if (pass.length < 6) { errEl.textContent = "密码至少 6 位"; return; }
+
+    btn.disabled = true;
+    btn.textContent = authMode === "login" ? "登录中..." : "注册中...";
+    errEl.textContent = "";
+
+    var result;
+    if (authMode === "signup") {
+      result = await supabase.auth.signUp({ email: email, password: pass });
+      if (result.error) {
+        errEl.textContent = "注册失败：" + result.error.message;
+        btn.disabled = false;
+        btn.textContent = "注册";
+        return;
+      }
+      if (result.data.user && !result.data.session) {
+        errEl.textContent = "注册成功！请检查邮箱确认链接，或关闭邮箱验证后再试。";
+        btn.disabled = false;
+        btn.textContent = "注册";
+        return;
+      }
+    } else {
+      result = await supabase.auth.signInWithPassword({ email: email, password: pass });
+    }
+
+    if (result.error) {
+      errEl.textContent = (authMode === "login" ? "登录" : "注册") + "失败：" + result.error.message;
+      btn.disabled = false;
+      btn.textContent = authMode === "login" ? "登录" : "注册";
+      return;
+    }
+
+    await onSignedIn();
+  });
+
+  // 回车登录
+  document.getElementById("auth-pass").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("auth-submit-btn").click();
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", async function () {
+    await supabase.auth.signOut();
+    showAuthUI();
+    setSyncDot("off");
+  });
+
+  document.getElementById("migrate-btn").addEventListener("click", async function () {
+    var hasLocal = false;
+    try { hasLocal = !!localStorage.getItem(RKEY); } catch (e) {}
+    if (!hasLocal) { alert("没有本地数据可导入"); return; }
+    if (!confirm("将本机浏览器中的 " + records.length + " 条记录和 " + profiles.length + " 个计划导入到云端？\n（成功后可清空本地数据）")) return;
+    await cloudSyncProfiles();
+    await cloudSyncRecords();
+    alert("导入成功！云端已有 " + records.length + " 条记录。\n现在可以清空本机旧数据：浏览器设置 → 清除站点数据。");
+  });
+
+  async function onSignedIn() {
+    showAppUI();
+    var user = (await supabase.auth.getUser()).data.user;
+    if (!user) { showAuthUI(); return; }
+    document.getElementById("user-email").textContent = user.email;
+
+    // 加载云端数据
+    setSyncDot("syncing");
+    try {
+      await loadFromCloud();
+      cloudReady = true;
+      setSyncDot("ok");
+      document.getElementById("migrate-btn").style.display = "none";
+    } catch (e) {
+      console.warn("云端加载失败，回退到本地存储", e);
+      loadFromLocal();
+      cloudReady = false;
+      setSyncDot("error");
+    }
+
+    // 检查是否有本地数据待导入
+    try {
+      var localRecords = JSON.parse(localStorage.getItem(RKEY) || "[]");
+      if (localRecords.length > 0 && records.length === 0) {
+        document.getElementById("migrate-btn").style.display = "";
+      }
+    } catch (e) {}
+
+    renderAll();
+  }
+
+  function setSyncDot(state) {
+    var dot = document.getElementById("sync-dot");
+    if (!dot) return;
+    dot.className = "sync-dot";
+    if (state === "syncing") dot.classList.add("syncing");
+    else if (state === "error") dot.classList.add("error");
+    else if (state === "off") dot.style.background = "#ccc";
+  }
+
+  // ========== 云端数据操作 ==========
+  async function loadFromCloud() {
+    var user = (await supabase.auth.getUser()).data.user;
+    if (!user) throw new Error("未登录");
+
+    // 加载计划
+    var { data: prows, error: perr } = await supabase.from("profiles").select("*").order("created_at");
+    if (perr) throw perr;
+    profiles = (prows || []).map(function (p) {
+      return { id: p.id, name: p.name, color: p.color };
+    });
+
+    // 加载记录
+    var { data: rrows, error: rerr } = await supabase.from("records").select("*").order("created_at");
+    if (rerr) throw rerr;
+    records = (rrows || []).map(function (r) {
+      return {
+        id: r.id, profile: r.profile_id, date: r.date,
+        event: r.event, amount: Number(r.amount), odds: Number(r.odds),
+        result: r.result, bonus: Number(r.bonus)
+      };
+    });
+  }
+
+  function loadFromLocal() {
+    try { profiles = JSON.parse(localStorage.getItem(PKEY)) || []; } catch (e) { profiles = []; }
+    try { records = JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { records = []; }
+    if (!Array.isArray(profiles)) profiles = [];
+    if (!Array.isArray(records)) records = [];
+    if (profiles.length === 0) { profiles.push({ id: uid(), name: "我自己", color: PALETTE[0] }); saveProfiles(); }
+    records.forEach(function (r) {
+      if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
+    });
+    try {
+      var sv = localStorage.getItem(VIEW_KEY);
+      if (sv === "all") currentView = "all";
+      else if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
+    } catch (e) {}
+  }
+
+  async function cloudSyncProfiles() {
+    if (!cloudReady) return;
+    try {
+      var user = (await supabase.auth.getUser()).data.user;
+      if (!user) return;
+      setSyncDot("syncing");
+      await supabase.from("records").delete().eq("user_id", user.id);
+      await supabase.from("profiles").delete().eq("user_id", user.id);
+      var prows = profiles.map(function (p) {
+        return { id: p.id, user_id: user.id, name: p.name, color: p.color };
+      });
+      if (prows.length > 0) {
+        var { error: perr } = await supabase.from("profiles").insert(prows);
+        if (perr) console.warn("云同步计划失败", perr);
+      }
+      await _cloudInsertRecords();
+      setSyncDot("ok");
+    } catch (e) { console.warn("云同步失败", e); setSyncDot("error"); }
+  }
+
+  async function cloudSyncRecords() {
+    if (!cloudReady) return;
+    try {
+      var user = (await supabase.auth.getUser()).data.user;
+      if (!user) return;
+      setSyncDot("syncing");
+      await supabase.from("records").delete().eq("user_id", user.id);
+      await _cloudInsertRecords();
+      setSyncDot("ok");
+    } catch (e) { console.warn("云同步记录失败", e); setSyncDot("error"); }
+  }
+
+  async function _cloudInsertRecords() {
+    var user = (await supabase.auth.getUser()).data.user;
+    if (records.length === 0) return;
+    var rrows = records.map(function (r) {
+      return {
+        id: r.id, user_id: user.id, profile_id: r.profile,
+        date: r.date, event: r.event,
+        amount: r.amount, odds: r.odds,
+        result: r.result, bonus: r.bonus
+      };
+    });
+    var { error: rerr } = await supabase.from("records").insert(rrows);
+    if (rerr) console.warn("云插入记录失败", rerr);
+  }
 
   // ---------- 主题（日间 / 夜间）----------
   var THEME_KEY = "bet_theme";
@@ -870,28 +1158,20 @@
   var resultFilter = "all";    // all / 红 / 黑
   var lastAddedId = null;      // 最近新增的记录，用于入场动画
 
-  // ---------- storage ----------
+  // ---------- storage (本地备份 + 云端同步) ----------
+  // loadFromCloud / loadFromLocal 已在认证流程中调用，此处保留 save 函数
   function load() {
-    try { profiles = JSON.parse(localStorage.getItem(PKEY)) || []; } catch (e) { profiles = []; }
-    try { records = JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { records = []; }
-    if (!Array.isArray(profiles)) profiles = [];
-    if (!Array.isArray(records)) records = [];
-    if (profiles.length === 0) { profiles.push({ id: uid(), name: "我自己", color: PALETTE[0] }); saveProfiles(); }
-    // migrate legacy records without profile
-    records.forEach(function (r) {
-      if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
-    });
-    // 恢复上次选中的计划（仅当该计划仍存在）
-    try {
-      var sv = localStorage.getItem(VIEW_KEY);
-      if (sv === "all") currentView = "all";
-      else if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
-    } catch (e) {}
+    // 兼容旧代码：如果云端未就绪，从本地加载（降级方案）
+    loadFromLocal();
+    renderAll();
   }
-  function saveProfiles() { try { localStorage.setItem(PKEY, JSON.stringify(profiles)); } catch (e) { if (window.console) console.warn("保存计划失败", e); } }
+  function saveProfiles() {
+    try { localStorage.setItem(PKEY, JSON.stringify(profiles)); } catch (e) {}
+    cloudSyncProfiles().catch(function (e) { console.warn("云同步计划失败", e); });
+  }
   function saveRecords() {
-    try { localStorage.setItem(RKEY, JSON.stringify(records)); }
-    catch (e) { if (window.console) console.warn("保存记录失败（本地存储不可用）", e); }
+    try { localStorage.setItem(RKEY, JSON.stringify(records)); } catch (e) {}
+    cloudSyncRecords().catch(function (e) { console.warn("云同步记录失败", e); });
   }
 
   // ---------- helpers ----------
@@ -2182,9 +2462,19 @@
   })();
 
   // ---------- init ----------
-  load();
-  renderAll();
+  (async function initApp() {
+    // 先检查是否已有登录会话
+    var { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData && sessionData.session) {
+      await onSignedIn();
+    } else {
+      showAuthUI();
+      // 未登录时从本地加载以保持离线可用
+      loadFromLocal();
+    }
+  })();
 })();
 </script>
+</div><!-- #app-ui -->
 </body>
 </html>
