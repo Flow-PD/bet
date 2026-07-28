@@ -59,8 +59,8 @@
 
   /* Header */
   .topbar {
-    width: calc(100% - 32px);
-    max-width: 828px;
+    width: 100%;
+    max-width: 860px;
     margin: 16px auto 0;
     background: var(--topbar-bg);
     color: var(--topbar-fg); border-radius: var(--radius);
@@ -86,20 +86,20 @@
   .stat .value.pos { color: var(--red); }     /* 盈利 = 红（与列表、对比表同一红） */
   .stat .value.neg { color: var(--green); }   /* 亏 = 绿（与列表、对比表同一绿） */
   /* 连红/连黑：悬停提示 + 数字强化 */
-  .stat .label.tip { cursor: help; display: inline-block; position: relative; border-bottom: 1px dashed rgba(127,140,160,.6); }
+  .stat .label.tip { cursor: help; display: inline-block; border-bottom: 1px dashed rgba(127,140,160,.6); }
   .stat .label.tip::after {
     content: attr(data-tip);
-    position: absolute; left: 50%; top: 100%;
-    transform: translateX(-50%) translateY(8px);
-    margin-top: 4px;
+    position: absolute; top: 8px; right: 8px;
+    transform: translateY(-6px);
+    max-width: calc(100% - 16px);
     background: #1f2630; color: #fff;
-    font-size: 11px; font-weight: 500; line-height: 1.5; letter-spacing: .2px;
-    padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+    font-size: 11px; font-weight: 500; line-height: 1.45; letter-spacing: .2px;
+    padding: 6px 9px; border-radius: 8px; white-space: normal; text-align: center;
     opacity: 0; pointer-events: none; z-index: 40;
     box-shadow: 0 8px 22px rgba(0,0,0,.28);
     transition: opacity .15s ease, transform .15s ease;
   }
-  .stat:hover .label.tip::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .stat:hover .label.tip::after { opacity: 1; transform: translateY(0); }
   .stat .value.streak-on { font-weight: 800; }
   .winbar-wrap {
     margin-top: 14px;
