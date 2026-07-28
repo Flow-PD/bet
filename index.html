@@ -34,7 +34,6 @@
 
   /* Header */
   .topbar {
-    position: sticky; top: 12px; z-index: 20;
     width: calc(100% - 32px);
     max-width: 828px;
     margin: 16px auto 0;
@@ -43,34 +42,36 @@
     box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.30), inset 0 -10px 22px rgba(0,0,0,.07);
   }
   .topbar-inner { padding: 16px; }
-  .topbar h1 { margin: 0 0 4px; font-size: 21px; font-weight: 800; letter-spacing: .5px; text-align: center; }
-  .topbar .sub { font-size: 12.5px; opacity: .9; margin-bottom: 14px; text-align: center; }
+  .topbar h1 { margin: 0 0 4px; font-size: 23px; font-weight: 800; letter-spacing: .6px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.18); }
+  .topbar .sub { font-size: 12.5px; opacity: .92; margin-bottom: 14px; text-align: center; letter-spacing: .3px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   @media (min-width: 560px) { .stats { grid-template-columns: repeat(4, 1fr); } }
-  .stat { background: rgba(255,255,255,.16); border-radius: 12px; padding: 13px 12px; backdrop-filter: blur(4px); }
-  .stat .label { font-size: 12px; opacity: .85; margin-bottom: 5px; }
-  .stat .value { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
-  .stat .value.pos { color: #ff9a9a; }   /* 盈利 = 红 */
-  .stat .value.neg { color: #8ff0bf; }   /* 亏 = 绿 */
-  .winbar-wrap { margin-top: 12px; }
-  .winbar-head { display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; opacity:.9; }
-  .winbar { height: 8px; background: rgba(255,255,255,.25); border-radius: 99px; overflow: hidden; }
+  .stat { background: rgba(255,255,255,.16); border-radius: 12px; padding: 14px 12px; backdrop-filter: blur(4px); }
+  .stat .label { font-size: 12.5px; opacity: .92; margin-bottom: 6px; font-weight: 600; letter-spacing: .3px; }
+  .stat .value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+  .stat .value.pos { color: #ffb0b0; }   /* 盈利 = 红 */
+  .stat .value.neg { color: #9cf3cd; }   /* 亏 = 绿 */
+  .winbar-wrap { margin-top: 14px; }
+  .winbar-head { display:flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; margin-bottom: 7px; opacity:.95; }
+  .winbar-head > span:first-child { font-weight: 600; letter-spacing: .4px; }
+  #win-pct-txt { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+  .winbar { height: 10px; background: rgba(255,255,255,.25); border-radius: 99px; overflow: hidden; }
   .winbar > i { display:block; height:100%; background:#fff; border-radius:99px; transition: width .4s ease; }
 
   /* Section card */
-  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-top: 16px; }
-  .card h2 { font-size: 15px; margin: 0 0 14px; display:flex; align-items:center; gap:8px; }
-  .card h2 .dot { width:8px;height:8px;border-radius:99px;background:var(--brand); }
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-top: 18px; }
+  .card h2 { font-size: 17px; font-weight: 800; letter-spacing: .3px; margin: 0 0 16px; display:flex; align-items:center; gap:9px; }
+  .card h2 .dot { width:9px;height:9px;border-radius:99px;background:var(--brand); }
 
   /* Form */
   .form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
   @media (min-width: 560px) { .form-grid { grid-template-columns: 1fr 1fr; } }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field.full { grid-column: 1 / -1; }
-  .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .field label { font-size: 16px; color: #14181f; font-weight: 700; letter-spacing: .2px; }
   .field input, .field select {
     border: 1.5px solid var(--line); border-radius: 11px;
-    padding: 11px 12px; font-size: 15px; color: var(--text);
+    padding: 11px 12px; font-size: 14px; color: var(--text);
     background: #fbfcfe; outline: none; width: 100%;
     transition: border-color .15s, box-shadow .15s; font-family: inherit;
   }
@@ -84,29 +85,56 @@
   .seg input { display: none; }
   .seg label.red.on { background: var(--red-soft); border-color: var(--red); color: var(--red); }
   .seg label.black.on { background: var(--black-soft); border-color: var(--black); color: var(--black); }
-  .hint { font-size: 11px; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 1px; }
   .actions { display:flex; gap: 10px; margin-top: 4px; }
   .btn { border: none; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: transform .08s, opacity .15s; flex: 1; }
   .btn:active { transform: scale(.98); }
   .btn-primary { background: var(--brand); color: #fff; }
   .btn-ghost { background: var(--brand-soft); color: var(--brand); flex: 0 0 auto; }
 
+  /* Custom dropdown (替代原生 select，弹出层完全可控) */
+  .c-select {
+    position: relative; display: inline-block;
+  }
+  .c-select-trigger {
+    display: flex; align-items: center; gap: 6px;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 9px 32px 9px 13px; font-size: 13px; font-weight: 600;
+    color: var(--text); background-color: #fafbfc;
+    cursor: pointer; user-select: none; white-space: nowrap;
+    font-family: inherit; outline: none;
+    min-width: 120px; max-width: 220px;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a93a3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 11px center;
+    line-height: 1.4;
+  }
+  .c-select-trigger:hover { border-color: #c0cad8; background-color: #fff; }
+  .c-select.open .c-select-trigger { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background-color: #fff; }
+  .c-select-arrow { margin-left: auto; transition: transform .2s ease; }
+  .c-select.open .c-select-arrow { transform: rotate(180deg); }
+  .c-drop {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+    min-width: 100%; width: max-content; max-width: 280px;
+    background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: 0 10px 32px rgba(31,39,51,.14), 0 2px 8px rgba(31,39,51,.06);
+    padding: 5px; overflow-y: auto; max-height: 240px;
+    animation: dropIn .18s ease;
+  }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+  .c-select.open .c-drop { display: block; }
+  .c-opt {
+    padding: 9px 13px; font-size: 13.5px; font-weight: 500; color: var(--text);
+    border-radius: 9px; cursor: pointer; white-space: nowrap;
+    transition: background .12s, color .12s; font-family: inherit; line-height: 1.35;
+  }
+  .c-opt:hover { background: var(--brand-soft); color: var(--brand); }
+  .c-opt.active { background: var(--brand); color: #fff; font-weight: 700; }
+
   /* Plan selector (view switch) */
   .plan-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
   .plan-sel { display: flex; align-items: center; gap: 10px; }
-  .plan-label { font-size: 12.5px; color: var(--muted); font-weight: 600; letter-spacing: .3px; }
-  .plan-sel select {
-    appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    border: 1.5px solid var(--line); border-radius: 12px;
-    padding: 10px 36px 10px 14px; font-size: 14px; font-weight: 600;
-    color: var(--text); background-color: #fff;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a93a3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    background-repeat: no-repeat; background-position: right 13px center;
-    font-family: inherit; outline: none; max-width: 220px; min-width: 120px; cursor: pointer;
-    transition: border-color .15s, box-shadow .15s, background-color .15s;
-  }
-  .plan-sel select:hover { border-color: #cfd8e6; }
-  .plan-sel select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .plan-label { font-size: 13px; color: var(--text); font-weight: 700; letter-spacing: .2px; }
   .plan-ops { display: flex; gap: 8px; flex-wrap: wrap; }
   .mini { border: 1.5px solid var(--line); background:#fff; color: var(--text); padding: 9px 14px; border-radius: 11px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
   .mini:hover { border-color: var(--brand); color: var(--brand); background: #fbfdff; }
@@ -125,13 +153,15 @@
   .mini.danger:hover { border-color: var(--red); color: var(--red); }
 
   /* Compare table */
-  .table-wrap { overflow-x: auto; }
-  table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
-  table.cmp th, table.cmp td { padding: 10px 8px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+  table.cmp th, table.cmp td { padding: 14px 11px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; line-height: 1.4; vertical-align: middle; }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
-  table.cmp th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
+  table.cmp th { color: var(--muted); font-weight: 700; font-size: 13px; white-space: nowrap; letter-spacing: .2px; background: #fafbfc; vertical-align: middle; }
+  table.cmp td { color: var(--text); font-weight: 500; vertical-align: middle; }
   table.cmp td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 99px; margin-right: 6px; vertical-align: middle; }
-  table.cmp tr.total td { font-weight: 700; border-top: 2px solid var(--line); }
+  table.cmp tr.total td { font-weight: 800; border-top: 2px solid var(--line); background: #f7f9fe; }
+  table.cmp tr.total td:first-child { color: var(--text); }
   .pos { color: var(--red); } .neg { color: var(--green); }   /* 盈利=红 亏=绿（中国习惯） */
 
   /* List */
@@ -196,6 +226,46 @@
   .modal-input { width: 100%; border: 1.5px solid var(--line); border-radius: 11px; padding: 11px 12px; font-size: 15px; color: var(--text); background: #fbfcfe; outline: none; font-family: inherit; margin-bottom: 14px; }
   .modal-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background: #fff; }
   .modal-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; display: block; }
+
+  /* 可折叠卡片 */
+  .section-toggle {
+    margin-left: auto; border: none; background: var(--brand-soft); color: var(--brand);
+    width: 30px; height: 30px; border-radius: 9px; cursor: pointer; font-size: 13px; line-height: 1;
+    display: flex; align-items: center; justify-content: center; transition: transform .25s ease, background .15s;
+  }
+  .section-toggle:hover { background: #dde7ff; }
+  .card.collapsed .section-body { display: none; }
+  .card.collapsed .section-toggle { transform: rotate(-90deg); }
+
+  /* 可排序对比表 */
+  table.cmp th.sortable { cursor: pointer; user-select: none; position: relative; transition: color .15s, background .15s; }
+  table.cmp th.sortable:hover { color: var(--brand); background: #f0f4ff; }
+  table.cmp th .arr { font-size: 10px; margin-left: 4px; opacity: .35; display: inline-block; }
+  table.cmp th.sorted { color: var(--brand); }
+  table.cmp th.sorted .arr { opacity: 1; }
+  table.cmp tbody tr { transition: background .15s; }
+  table.cmp tbody tr:hover { background: #f7f9fe; }
+
+  /* 对比分析菜单栏：与上方「计划」风格统一 */
+  .cmp-bar {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    justify-content: space-between; margin-bottom: 14px;
+  }
+  .cmp-bar .plan-sel { gap: 8px; }
+  .cmp-bar .c-select-trigger { font-size: 13px; padding: 9px 30px 9px 12px; min-width: 130px; }
+  .cmp-bar .mini { font-size: 13px; padding: 9px 16px; }
+
+  /* 列表记录入场/退场动画 */
+  @keyframes recIn { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
+  .rec.is-new { animation: recIn .35s cubic-bezier(.2,.7,.3,1); }
+  @keyframes recOut { to { opacity: 0; transform: translateX(14px); } }
+  .rec.removing { animation: recOut .22s ease forwards; pointer-events: none; }
+  .rec { transition: box-shadow .15s; }
+  .rec:hover { box-shadow: 0 4px 14px rgba(31,39,51,.07); }
+
+  /* 可编辑赔率字段：强调可交互 */
+  #f-odds, #m-odds, #dupN-odds, #dupO-odds { background: #fff; }
+  #f-odds:focus, #m-odds:focus, #dupN-odds:focus, #dupO-odds:focus { box-shadow: 0 0 0 3px var(--brand-soft); border-color: var(--brand); background: #fff; }
 </style>
 </head>
 <body>
@@ -223,7 +293,10 @@
       <div class="plan-bar">
         <div class="plan-sel">
           <span class="plan-label">查看</span>
-          <select id="plan-select"></select>
+          <div class="c-select" id="plan-select-wrap">
+            <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
+            <div class="c-drop" id="plan-drop"></div>
+          </div>
         </div>
         <div class="plan-ops">
           <button class="mini" id="rename-plan-btn" title="修改计划名称">✎ 改名</button>
@@ -235,12 +308,11 @@
 
     <!-- Add form -->
     <div class="card">
-      <h2><span class="dot"></span>添加投注记录</h2>
+      <h2><span class="dot"></span>添加投注记录
+        <button type="button" class="section-toggle" id="add-toggle" aria-label="折叠/展开">▾</button>
+      </h2>
+      <div class="section-body">
       <form id="add-form" class="form-grid" autocomplete="off">
-        <div class="field">
-          <label for="f-profile">计划</label>
-          <select id="f-profile"></select>
-        </div>
         <div class="field">
           <label for="f-date">日期</label>
           <input type="date" id="f-date" required />
@@ -251,12 +323,13 @@
         </div>
         <div class="field">
           <label for="f-amount">投注金额</label>
-          <input type="number" id="f-amount" placeholder="0" min="0" step="0.01" required />
+          <input type="number" id="f-amount" placeholder="0" min="0" step="0.01" inputmode="decimal" required />
+          <span class="hint">你下的本金，比如 100</span>
         </div>
         <div class="field">
-          <label for="f-odds">赔率（自动）</label>
-          <input type="text" id="f-odds" placeholder="奖金÷金额" readonly />
-          <span class="hint">根据下方「奖金」自动计算，保留 2 位小数</span>
+          <label for="f-odds">赔率</label>
+          <input type="number" id="f-odds" placeholder="如 1.85，可手动输入" min="0" step="0.01" inputmode="decimal" />
+          <span class="hint">不填就按奖金自动算</span>
         </div>
         <div class="field">
           <label>结果</label>
@@ -264,11 +337,12 @@
             <label class="red" id="lab-red"><input type="radio" name="result" value="红" checked /><span>红 (命中)</span></label>
             <label class="black" id="lab-black"><input type="radio" name="result" value="黑" /><span>黑 (未中)</span></label>
           </div>
+          <span class="hint">选黑，本金照扣、奖金自动记 0</span>
         </div>
         <div class="field">
           <label for="f-bonus">奖金（返还）</label>
-          <input type="number" id="f-bonus" placeholder="实得返还，如 1080" min="0" step="0.01" required />
-          <span class="hint">赔率 = 奖金 ÷ 投注金额，自动算出</span>
+          <input type="number" id="f-bonus" placeholder="实得返还，如 1080" min="0" step="0.01" inputmode="decimal" required />
+          <span class="hint">不填就按赔率自动算</span>
         </div>
         <div class="field full">
           <div class="actions">
@@ -276,11 +350,24 @@
           </div>
         </div>
       </form>
+      </div>
     </div>
 
     <!-- Compare -->
     <div class="card">
       <h2><span class="dot"></span>对比分析</h2>
+      <div class="cmp-bar">
+        <div class="plan-sel">
+          <span class="plan-label">排序</span>
+          <div class="c-select" id="cmp-sort-wrap">
+            <div class="c-select-trigger" id="cmp-sort-trigger"><span id="cmp-sort-text">净盈亏</span></div>
+            <div class="c-drop" id="cmp-drop"></div>
+          </div>
+        </div>
+        <div class="plan-ops">
+          <button class="mini" id="cmp-export-btn">导出对比</button>
+        </div>
+      </div>
       <div class="table-wrap"><table class="cmp" id="compare-table"></table></div>
     </div>
 
@@ -331,6 +418,7 @@
   var records = [];
   var currentView = "all";   // "all" or profile id
   var resultFilter = "all";    // all / 红 / 黑
+  var lastAddedId = null;      // 最近新增的记录，用于入场动画
 
   // ---------- storage ----------
   function load() {
@@ -344,8 +432,11 @@
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
   }
-  function saveProfiles() { localStorage.setItem(PKEY, JSON.stringify(profiles)); }
-  function saveRecords() { localStorage.setItem(RKEY, JSON.stringify(records)); }
+  function saveProfiles() { try { localStorage.setItem(PKEY, JSON.stringify(profiles)); } catch (e) { if (window.console) console.warn("保存计划失败", e); } }
+  function saveRecords() {
+    try { localStorage.setItem(RKEY, JSON.stringify(records)); }
+    catch (e) { if (window.console) console.warn("保存记录失败（本地存储不可用）", e); }
+  }
 
   // ---------- helpers ----------
   function fmtMoney(n) {
@@ -366,6 +457,40 @@
     return (bonus - amount) / amount;
   }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // 数字格式化：去尾随 0（1.50→1.5、2→2）
+  function numStr(n) { return (Math.round((n || 0) * 100) / 100).toString(); }
+
+  // 由 金额 / 结果 / 赔率 / 奖金 推导最终存储值（赔率优先，否则由奖金反推）
+  function deriveMoney(A, result, oddsRaw, bonusRaw) {
+    A = parseFloat(A) || 0;
+    if (!isNaN(oddsRaw) && oddsRaw > 0 && A > 0) {
+      return { odds: Math.round(oddsRaw * 100) / 100, bonus: result === "红" ? Math.round(A * oddsRaw * 100) / 100 : 0 };
+    }
+    if (!isNaN(bonusRaw) && A > 0) {
+      return { odds: Math.round((bonusRaw / A) * 100) / 100, bonus: Math.round(bonusRaw * 100) / 100 };
+    }
+    return { odds: 0, bonus: 0 };
+  }
+
+  // 金额 / 赔率 / 奖金 三字段双向联动：anchor 为最后编辑的字段
+  function recalcTriple(anchor, els, result) {
+    var A = parseFloat(els.amount.value) || 0;
+    var O = parseFloat(els.odds.value) || 0;
+    var B = parseFloat(els.bonus.value) || 0;
+    if (result === "黑") {
+      if (els.bonus.value === "" || B === 0) els.bonus.value = "0";
+      return;
+    }
+    if (anchor === "amount") {
+      if (O > 0) els.bonus.value = numStr(Math.round(A * O * 100) / 100);
+      else if (A > 0 && B > 0) els.odds.value = numStr(Math.round((B / A) * 100) / 100);
+    } else if (anchor === "bonus") {
+      if (A > 0 && B > 0) els.odds.value = numStr(Math.round((B / A) * 100) / 100);
+    } else if (anchor === "odds") {
+      if (A > 0 && O > 0) els.bonus.value = numStr(Math.round(A * O * 100) / 100);
+    }
+  }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -409,7 +534,7 @@
     });
     modalOverlay.style.display = "flex";
   }
-  function closeModal() { modalOverlay.style.display = "none"; modalMsg.innerHTML = ""; modalActions.innerHTML = ""; }
+  function closeModal() { modalOverlay.style.display = "none"; }
   function showAlert(msg, onOk) { openModal(escapeHtml(msg), [{ label: "知道了", primary: true, onClick: onOk }]); }
   function showConfirm(msg, onOk, danger) { openModal(escapeHtml(msg), [{ label: "取消" }, { label: "确认", primary: true, danger: danger, onClick: onOk }]); }
 
@@ -438,12 +563,13 @@
     actions.innerHTML = "";
     function addBtn(label, cls, fn) { var b = document.createElement("button"); b.textContent = label; b.className = cls; b.addEventListener("click", fn); actions.appendChild(b); }
     addBtn("保存新记录（都保留）", "dup-save", function () {
+      var nr = readDupRec("N");
       closeDup();
-      records.push(readDupRec("N")); saveRecords(); afterAddReset(); renderAll();
+      records.push(nr); lastAddedId = nr.id; saveRecords(); afterAddReset(); renderAll();
     });
     addBtn("用新版覆盖旧版", "dup-overwrite", function () {
-      closeDup();
       var nr = readDupRec("N");
+      closeDup();
       oldRec.profile = nr.profile; oldRec.date = nr.date; oldRec.event = nr.event;
       oldRec.amount = nr.amount; oldRec.odds = nr.odds; oldRec.result = nr.result; oldRec.bonus = nr.bonus;
       saveRecords(); afterAddReset(); renderAll();
@@ -454,15 +580,19 @@
     document.getElementById("dupO-profile").value = oldRec.profile;
     updateDupNet("N"); updateDupNet("O");
     ["N", "O"].forEach(function (side) {
-      ["amount", "odds", "bonus"].forEach(function (f) {
-        document.getElementById("dup" + side + "-" + f).addEventListener("input", function () {
-          if (f !== "odds") {
-            var amt = parseFloat(document.getElementById("dup" + side + "-amount").value) || 0;
-            var bn = parseFloat(document.getElementById("dup" + side + "-bonus").value) || 0;
-            if (amt > 0) document.getElementById("dup" + side + "-odds").value = (bn / amt).toFixed(2);
-          }
-          updateDupNet(side);
-        });
+      var dEls = {
+        amount: document.getElementById("dup" + side + "-amount"),
+        bonus: document.getElementById("dup" + side + "-bonus"),
+        odds: document.getElementById("dup" + side + "-odds")
+      };
+      var getR = function () { return document.getElementById("dup" + side + "-result").value; };
+      ["amount", "bonus", "odds"].forEach(function (f) {
+        dEls[f].addEventListener("input", function () { recalcTriple(f, dEls, getR()); updateDupNet(side); });
+      });
+      document.getElementById("dup" + side + "-result").addEventListener("change", function () {
+        if (getR() === "黑") { if (dEls.bonus.value === "") dEls.bonus.value = "0"; }
+        else { var A = parseFloat(dEls.amount.value) || 0, O = parseFloat(dEls.odds.value) || 0; if (O > 0) dEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
+        updateDupNet(side);
       });
     });
     dupOverlay.style.display = "flex";
@@ -477,15 +607,20 @@
       "纯盈利 <span class=\"" + cls + "\">" + fmtMoney(net) + "</span> · 收益率 <span class=\"" + cls + "\">" + fmtPct(roi) + "</span>";
   }
   function readDupRec(side) {
+    var amount = parseFloat(document.getElementById("dup" + side + "-amount").value) || 0;
+    var result = document.getElementById("dup" + side + "-result").value;
+    var dm = deriveMoney(amount, result,
+      parseFloat(document.getElementById("dup" + side + "-odds").value),
+      parseFloat(document.getElementById("dup" + side + "-bonus").value));
     return {
       id: uid(),
       profile: document.getElementById("dup" + side + "-profile").value,
       date: document.getElementById("dup" + side + "-date").value,
       event: (document.getElementById("dup" + side + "-event").value || "").trim(),
-      amount: parseFloat(document.getElementById("dup" + side + "-amount").value) || 0,
-      odds: parseFloat(document.getElementById("dup" + side + "-odds").value) || 0,
-      result: document.getElementById("dup" + side + "-result").value,
-      bonus: parseFloat(document.getElementById("dup" + side + "-bonus").value) || 0
+      amount: amount,
+      odds: dm.odds,
+      result: result,
+      bonus: dm.bonus
     };
   }
   function closeDup() { dupOverlay.style.display = "none"; document.getElementById("dup-body").innerHTML = ""; document.getElementById("dup-actions").innerHTML = ""; }
@@ -521,36 +656,124 @@
   }
 
   // ---------- plan UI ----------
+  // 自定义下拉通用逻辑
+  function initCustomDrop(wrapId, triggerId, dropId, textId, options, defaultVal, onChange) {
+    var wrap = document.getElementById(wrapId);
+    var trigger = document.getElementById(triggerId);
+    var drop = document.getElementById(dropId);
+    var textEl = document.getElementById(textId);
+    var currentVal = defaultVal;
+
+    function renderOpts() {
+      drop.innerHTML = options.map(function (o) {
+        return '<div class="c-opt' + (o.value === currentVal ? ' active' : '') + '" data-v="' + o.value + '">' + escapeHtml(o.label) + '</div>';
+      }).join("");
+      Array.prototype.forEach.call(drop.querySelectorAll(".c-opt"), function (opt) {
+        opt.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var v = opt.getAttribute("data-v");
+          if (v === currentVal) { closeDrop(); return; }
+          currentVal = v;
+          textEl.textContent = opt.textContent;
+          renderOpts();
+          closeDrop();
+          if (onChange) onChange(v);
+        });
+      });
+    }
+
+    function openDrop() {
+      closeAllDrops();
+      wrap.classList.add("open");
+      renderOpts();
+    }
+    function closeDrop() { wrap.classList.remove("open"); }
+
+    trigger.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (wrap.classList.contains("open")) closeDrop(); else openDrop();
+    });
+    return { getValue: function () { return currentVal; }, setValue: function (v) {
+      currentVal = v;
+      var found = options.find(function (o) { return o.value === v; });
+      textEl.textContent = found ? found.label : "";
+      renderOpts();
+    }, close: closeDrop, refresh: renderOpts };
+  }
+
+  // 关闭所有自定义下拉
+  function closeAllDrops() {
+    document.querySelectorAll(".c-select.open").forEach(function (el) { el.classList.remove("open"); });
+  }
+  document.addEventListener("click", function () { closeAllDrops(); });
+
+  // 排序下拉选项定义
+  var CMP_SORT_OPTS = [
+    { value: "net", label: "净盈亏" },
+    { value: "roi", label: "收益率" },
+    { value: "winRate", label: "胜率" },
+    { value: "input", label: "总投入" },
+    { value: "count", label: "笔数" }
+  ];
+
+  var planDropCtrl, cmpDropCtrl;  // 下拉控制器
+
   function renderPlanSelect() {
-    var sel = document.getElementById("plan-select");
-    var html = '<option value="all">全部</option>';
-    html += profiles.map(function (p) { return '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>'; }).join("");
-    sel.innerHTML = html;
-    sel.value = (currentView !== "all" && getProfile(currentView)) ? currentView : "all";
+    var opts = [{ value: "all", label: "全部" }].concat(
+      profiles.map(function (p) { return { value: p.id, label: p.name }; })
+    );
+    var target = (currentView !== "all" && getProfile(currentView)) ? currentView : "all";
+    if (!planDropCtrl) {
+      planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
+        opts, target, function (val) {
+          currentView = val;
+          var p = getProfile(currentView);
+          document.getElementById("view-sub").textContent = currentView === "all"
+            ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
+          renderPlans(); renderStats(); renderList();
+        });
+    } else {
+      planDropCtrl.setValue(target);
+      planDropCtrl.refresh();
+    }
     var isPlan = currentView !== "all" && !!getProfile(currentView);
     document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
     document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
   }
-  function fillProfileSelect() {
-    var sel = document.getElementById("f-profile");
-    sel.innerHTML = profiles.map(function (p) { return '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>'; }).join("");
-    var def = (currentView !== "all" && getProfile(currentView)) ? currentView : profiles[0].id;
-    sel.value = def;
-  }
-  function renderPlans() { renderPlanSelect(); fillProfileSelect(); }
+  function renderPlans() { renderPlanSelect(); }
 
-  // ---------- compare ----------
+  // ---------- compare (可排序) ----------
+  var cmpSort = { key: "net", dir: "desc" };
+  var CMP_COLS = [
+    { key: "name", label: "计划", num: false },
+    { key: "count", label: "笔数", num: true },
+    { key: "input", label: "总投入", num: true },
+    { key: "ret", label: "总返还", num: true },
+    { key: "net", label: "净盈亏", num: true },
+    { key: "winRate", label: "胜率", num: true },
+    { key: "roi", label: "收益率", num: true }
+  ];
   function renderCompare() {
     var box = document.getElementById("compare-table");
     var rows = profiles.map(function (p) {
       var s = compute(records.filter(function (r) { return r.profile === p.id; }));
       return { p: p, s: s, roi: s.input > 0 ? s.net / s.input : 0 };
     });
-    rows.sort(function (a, b) { return b.s.net - a.s.net; });
+    var valOf = function (row) { return cmpSort.key === "name" ? row.p.name : cmpSort.key === "roi" ? row.roi : row.s[cmpSort.key]; };
+    rows.sort(function (a, b) {
+      var va = valOf(a), vb = valOf(b);
+      if (cmpSort.key === "name") return cmpSort.dir === "asc" ? String(va).localeCompare(String(vb), "zh") : String(vb).localeCompare(String(va), "zh");
+      return cmpSort.dir === "asc" ? va - vb : vb - va;
+    });
     var total = compute(records);
     var troi = total.input > 0 ? total.net / total.input : 0;
 
-    var head = "<thead><tr><th>计划</th><th>笔数</th><th>总投入</th><th>总返还</th><th>净盈亏</th><th>胜率</th><th>收益率</th></tr></thead>";
+    var head = "<thead><tr>" + CMP_COLS.map(function (c) {
+      var sorted = cmpSort.key === c.key;
+      var arr = sorted ? (cmpSort.dir === "asc" ? "▲" : "▼") : "↕";
+      return '<th class="sortable' + (sorted ? " sorted" : "") + '" data-sort="' + c.key + '">' + c.label +
+        ' <span class="arr">' + arr + "</span></th>";
+    }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
       return "<tr>" +
@@ -569,7 +792,23 @@
       '<td class="' + tcls + '">' + fmtMoney(total.net) + "</td><td>" + fmtPct(total.winRate) + "</td>" +
       '<td class="' + tcls + '">' + fmtPct(troi) + "</td></tr></tbody>";
     box.innerHTML = head + body;
+    Array.prototype.forEach.call(box.querySelectorAll("th.sortable"), function (th) {
+      th.addEventListener("click", function () {
+        var k = th.getAttribute("data-sort");
+        if (cmpSort.key === k) cmpSort.dir = cmpSort.dir === "asc" ? "desc" : "asc";
+        else { cmpSort.key = k; cmpSort.dir = (k === "name") ? "asc" : "desc"; }
+        renderCompare();
+      });
+    });
   }
+
+  // 对比分析：排序下拉（自定义组件）
+  cmpDropCtrl = initCustomDrop("cmp-sort-wrap", "cmp-sort-trigger", "cmp-drop", "cmp-sort-text",
+    CMP_SORT_OPTS, "net", function (val) {
+      cmpSort.key = val;
+      cmpSort.dir = "desc";
+      renderCompare();
+    });
 
   // ---------- list ----------
   function sortRecs(arr) { arr.sort(function (a, b) { return (b.date + b.id).localeCompare(a.date + a.id); }); return arr; }
@@ -577,7 +816,8 @@
     var y = yieldOf(r), plClass = y >= 0 ? "pos" : "neg";
     var plText = (y >= 0 ? "+" : "") + fmtPct(y);
     var tagClass = r.result === "红" ? "red" : "black";
-    return '<div class="rec' + (r.result === "红" ? " red-event" : "") + '" data-id="' + r.id + '">' +
+    var isNew = (r.id === lastAddedId) ? " is-new" : "";
+    return '<div class="rec' + (r.result === "红" ? " red-event" : "") + isNew + '" data-id="' + r.id + '">' +
       '<div class="rec-top">' +
         '<div class="rec-head">' +
           '<div class="event">' + escapeHtml(r.event) + '</div>' +
@@ -622,6 +862,7 @@
       var rs2 = sortRecs(base.filter(function (r) { return r.profile === currentView; }));
       box.innerHTML = rs2.length ? rs2.map(renderRec).join("") : '<div class="empty">没有符合条件的记录</div>';
     }
+    lastAddedId = null;
   }
 
   function renderAll() { renderPlans(); renderStats(); renderCompare(); renderList(); }
@@ -640,8 +881,8 @@
       '<input class="modal-input" id="m-event" value="' + escapeHtml(r.event || "") + '" />' +
       '<div class="modal-label">投注金额</div>' +
       '<input class="modal-input" id="m-amount" type="number" min="0" step="0.01" value="' + (parseFloat(r.amount) || 0) + '" />' +
-      '<div class="modal-label">赔率（自动：按 奖金 ÷ 金额 计算）</div>' +
-      '<input class="modal-input" id="m-odds" type="text" value="' + (parseFloat(r.odds) || 0).toFixed(2) + '" readonly />' +
+      '<div class="modal-label">赔率（可手动输入，或自动算）</div>' +
+      '<input class="modal-input" id="m-odds" type="number" min="0" step="0.01" inputmode="decimal" value="' + (parseFloat(r.odds) || 0).toFixed(2) + '" />' +
       '<div class="modal-label">结果</div>' +
       '<div class="seg" id="m-seg">' +
         '<label class="red' + (r.result === "红" ? " on" : "") + '"><input type="radio" name="m-result" value="红"' + (r.result === "红" ? " checked" : "") + ' /><span>红 (命中)</span></label>' +
@@ -656,25 +897,25 @@
         var nd = (document.getElementById("m-date").value || "").trim();
         var ne = (document.getElementById("m-event").value || "").trim();
         var na = parseFloat(document.getElementById("m-amount").value) || 0;
-        var nb = parseFloat(document.getElementById("m-bonus").value) || 0;
         var nr = document.querySelector('input[name="m-result"]:checked').value;
         if (!ne) { showAlert("赛事名称不能为空"); return; }
-        r.profile = np; r.date = nd; r.event = ne; r.amount = na; r.bonus = nb; r.result = nr;
-        r.odds = na > 0 ? Math.round((nb / na) * 100) / 100 : 0;
+        var dm = deriveMoney(na, nr,
+          parseFloat(document.getElementById("m-odds").value),
+          parseFloat(document.getElementById("m-bonus").value));
+        r.profile = np; r.date = nd; r.event = ne; r.amount = na; r.odds = dm.odds; r.bonus = dm.bonus; r.result = nr;
         saveRecords(); renderAll();
       } }
     ]);
-    var mSync = function () {
-      var a = parseFloat(document.getElementById("m-amount").value) || 0;
-      var b = parseFloat(document.getElementById("m-bonus").value) || 0;
-      document.getElementById("m-odds").value = a > 0 ? (b / a).toFixed(2) : "";
-    };
-    ["m-amount", "m-bonus"].forEach(function (id) {
-      var el = document.getElementById(id); if (el) el.addEventListener("input", mSync);
+    var mEls = { amount: document.getElementById("m-amount"), bonus: document.getElementById("m-bonus"), odds: document.getElementById("m-odds") };
+    var getMResult = function () { return document.querySelector('input[name="m-result"]:checked').value; };
+    ["amount", "bonus", "odds"].forEach(function (f) {
+      mEls[f].addEventListener("input", function () { recalcTriple(f, mEls, getMResult()); });
     });
     document.querySelectorAll('#m-seg input').forEach(function (el) {
       el.addEventListener("change", function () {
         document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
+        if (getMResult() === "黑") { if (mEls.bonus.value === "") mEls.bonus.value = "0"; }
+        else { var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
       });
     });
   }
@@ -685,36 +926,43 @@
     var d = new Date();
     document.getElementById("f-date").value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   })();
+  function getAddResult() { return document.querySelector('input[name="result"]:checked').value; }
+  var addEls = { amount: document.getElementById("f-amount"), bonus: document.getElementById("f-bonus"), odds: document.getElementById("f-odds") };
+  function addRecalc(anchor) { recalcTriple(anchor, addEls, getAddResult()); }
   function syncSeg() {
-    var val = document.querySelector('input[name="result"]:checked').value;
+    var val = getAddResult();
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
-    var b = document.getElementById("f-bonus");
-    if (val === "黑" && b.value === "") b.value = "0";
-    autoOdds();
+    if (val === "黑") { if (addEls.bonus.value === "") addEls.bonus.value = "0"; }
+    else { var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0; if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
   }
   document.querySelectorAll('input[name="result"]').forEach(function (el) { el.addEventListener("change", syncSeg); });
   syncSeg();
 
-  function autoOdds() {
-    var amount = parseFloat(document.getElementById("f-amount").value) || 0;
-    var bonus = parseFloat(document.getElementById("f-bonus").value) || 0;
-    var o = document.getElementById("f-odds");
-    o.value = (amount > 0) ? (bonus / amount).toFixed(2) : "";
-  }
-  ["f-amount", "f-bonus"].forEach(function (id) { document.getElementById(id).addEventListener("input", autoOdds); });
+  ["f-amount", "f-bonus", "f-odds"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () { addRecalc(id.replace("f-", "")); });
+  });
+
+  // 添加表单可折叠
+  document.getElementById("add-toggle").addEventListener("click", function () {
+    this.closest(".card").classList.toggle("collapsed");
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    var res = document.querySelector('input[name="result"]:checked').value;
+    var dm = deriveMoney(document.getElementById("f-amount").value, res,
+      parseFloat(document.getElementById("f-odds").value),
+      parseFloat(document.getElementById("f-bonus").value));
     var rec = {
       id: uid(),
-      profile: document.getElementById("f-profile").value,
+      profile: (currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : ""),
       date: document.getElementById("f-date").value,
       event: document.getElementById("f-event").value.trim(),
       amount: parseFloat(document.getElementById("f-amount").value) || 0,
-      odds: parseFloat(document.getElementById("f-odds").value) || 0,
-      result: document.querySelector('input[name="result"]:checked').value,
-      bonus: parseFloat(document.getElementById("f-bonus").value) || 0
+      odds: dm.odds,
+      result: res,
+      bonus: dm.bonus
     };
     if (!rec.date || !rec.event) return;
 
@@ -725,19 +973,11 @@
     });
     if (dup) { openDupModal(rec, dup); return; }
 
+    lastAddedId = rec.id;
     records.push(rec);
     saveRecords();
     renderAll();
     afterAddReset();
-  });
-
-  // ---------- plan select (view switch) ----------
-  document.getElementById("plan-select").addEventListener("change", function () {
-    currentView = this.value;
-    var p = getProfile(currentView);
-    document.getElementById("view-sub").textContent = currentView === "all" ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
-    if (currentView !== "all" && getProfile(currentView)) document.getElementById("f-profile").value = currentView;
-    renderPlans(); renderStats(); renderList();
   });
 
   // ---------- rename plan ----------
@@ -793,8 +1033,17 @@
     var id = btn.getAttribute("data-id");
     if (btn.classList.contains("del")) {
       showConfirm("确定删除这条记录？\n此操作不可恢复", function () {
-        records = records.filter(function (r) { return r.id !== id; });
-        saveRecords(); renderAll();
+        var recEl = btn.closest(".rec");
+        if (recEl) {
+          recEl.classList.add("removing");
+          setTimeout(function () {
+            records = records.filter(function (r) { return r.id !== id; });
+            saveRecords(); renderAll();
+          }, 220);
+        } else {
+          records = records.filter(function (r) { return r.id !== id; });
+          saveRecords(); renderAll();
+        }
       }, true);
     } else if (btn.classList.contains("edit")) {
       var r = records.find(function (x) { return x.id === id; }); if (!r) return;
@@ -829,6 +1078,42 @@
     var a = document.createElement("a");
     var d = new Date();
     a.href = url; a.download = "投注记录_" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // 导出「对比分析」表为 CSV
+  document.getElementById("cmp-export-btn").addEventListener("click", function () {
+    if (profiles.length === 0) { showAlert("暂无计划可导出"); return; }
+    var valOf = function (row) { return cmpSort.key === "name" ? row.p.name : cmpSort.key === "roi" ? row.roi : row.s[cmpSort.key]; };
+    var rows = profiles.map(function (p) {
+      var s = compute(records.filter(function (r) { return r.profile === p.id; }));
+      return { p: p, s: s, roi: s.input > 0 ? s.net / s.input : 0 };
+    }).sort(function (a, b) {
+      var va = valOf(a), vb = valOf(b);
+      if (cmpSort.key === "name") return cmpSort.dir === "asc" ? String(va).localeCompare(String(vb), "zh") : String(vb).localeCompare(String(va), "zh");
+      return cmpSort.dir === "asc" ? va - vb : vb - va;
+    });
+    var r2 = function (n) { return Math.round((n || 0) * 100) / 100; };
+    var lines = [["计划", "笔数", "总投入", "总返还", "净盈亏", "胜率", "收益率"]];
+    rows.forEach(function (row) {
+      lines.push([row.p.name, row.s.count, r2(row.s.input), r2(row.s.ret), r2(row.s.net), fmtPct(row.s.winRate), fmtPct(row.roi)]);
+    });
+    var total = compute(records);
+    var troi = total.input > 0 ? total.net / total.input : 0;
+    lines.push(["合计", total.count, r2(total.input), r2(total.ret), r2(total.net), fmtPct(total.winRate), fmtPct(troi)]);
+    var csv = lines.map(function (row) {
+      return row.map(function (c) {
+        var s = String(c);
+        if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(",");
+    }).join("\r\n");
+    var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var d = new Date();
+    a.href = url; a.download = "对比分析_" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
