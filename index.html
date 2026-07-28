@@ -43,13 +43,6 @@
   #auth-ui .auth-forgot-wrap { text-align: right; margin: -6px 0 8px; }
   #auth-ui .auth-forgot-wrap a { font-size: 12.5px; color: var(--brand); text-decoration: none; font-weight: 500; }
   #auth-ui .auth-forgot-wrap a:hover { text-decoration: underline; }
-  #auth-ui .auth-back-wrap { text-align: center; margin-top: 10px; }
-  #auth-ui .auth-back-wrap a { font-size: 12.5px; color: var(--muted); text-decoration: none; }
-  #auth-ui .auth-back-wrap a:hover { color: var(--brand); text-decoration: underline; }
-
-  /* 重置密码面板图标 */
-  .reset-icon-wrap { display: flex; justify-content: center; margin-top: 8px; }
-  .reset-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); padding: 12px; }
 
   /* 用户栏（顶栏内） */
   .user-bar { display: flex; align-items: center; justify-content: flex-end; padding: 0 0 12px; }
@@ -790,23 +783,6 @@
       <button class="auth-btn" id="auth-submit-btn">登录</button>
       <div class="auth-err" id="auth-err"></div>
     </div>
-
-    <div id="auth-reset-panel" class="hidden">
-      <div class="reset-icon-wrap">
-        <svg class="reset-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-      </div>
-      <div class="auth-sub" style="text-align:center;margin-top:12px">忘记密码？</div>
-      <div class="auth-sub" style="font-size:12.5px;color:var(--muted);margin-bottom:20px">输入你的注册邮箱，<br>我们会发送重置链接到该邮箱</div>
-      <div class="auth-field">
-        <label for="auth-reset-email">邮箱地址</label>
-        <input type="email" id="auth-reset-email" placeholder="your@email.com" autocomplete="email" />
-      </div>
-      <button class="auth-btn" id="auth-reset-btn">发送重置链接</button>
-      <div class="auth-err" id="auth-reset-err"></div>
-      <div class="auth-back-wrap">
-        <a href="#" id="auth-reset-back">← 返回登录</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1047,10 +1023,6 @@
     document.getElementById("auth-ui").classList.remove("hidden");
     document.getElementById("app-ui").classList.add("hidden");
     document.getElementById("auth-err").textContent = "";
-    document.getElementById("auth-reset-err").textContent = "";
-    // 确保显示主面板
-    document.getElementById("auth-main-panel").classList.remove("hidden");
-    document.getElementById("auth-reset-panel").classList.add("hidden");
     document.getElementById("auth-sub").textContent = "登录或注册以同步数据到云端";
     // 恢复已保存的账号/密码
     var savedAcc = localStorage.getItem("bet_saved_acc");
@@ -1218,44 +1190,10 @@
     if (e.key === "Enter") document.getElementById("auth-submit-btn").click();
   });
 
-  // 忘记密码：切换面板
+  // 忘记密码：提示用户联系管理员
   document.getElementById("auth-forgot-link").addEventListener("click", function (e) {
     e.preventDefault();
-    document.getElementById("auth-main-panel").classList.add("hidden");
-    document.getElementById("auth-reset-panel").classList.remove("hidden");
-    var savedAcc = localStorage.getItem("bet_saved_acc");
-    document.getElementById("auth-reset-email").value = savedAcc || "";
-  });
-  document.getElementById("auth-reset-back").addEventListener("click", function (e) {
-    e.preventDefault();
-    document.getElementById("auth-reset-panel").classList.add("hidden");
-    document.getElementById("auth-main-panel").classList.remove("hidden");
-    document.getElementById("auth-sub").textContent = "登录或注册以同步数据到云端";
-  });
-  // 发送重置邮件
-  document.getElementById("auth-reset-btn").addEventListener("click", async function () {
-    var email = document.getElementById("auth-reset-email").value.trim();
-    var errEl = document.getElementById("auth-reset-err");
-    var btn = document.getElementById("auth-reset-btn");
-    if (!email) { errEl.textContent = "请输入邮箱"; return; }
-    if (email.indexOf("@") === -1) { errEl.textContent = "请输入有效邮箱"; return; }
-    btn.disabled = true;
-    btn.textContent = "发送中...";
-    errEl.textContent = "";
-    errEl.style.color = ""; // 重置颜色
-    try {
-      var result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "https://flow-pd.github.io/bet/" });
-      if (result.error) {
-        errEl.textContent = "发送失败：" + result.error.message;
-      } else {
-        errEl.style.color = "var(--green)";
-        errEl.textContent = "重置邮件已发送，请去邮箱查收！";
-      }
-    } catch (e) {
-      errEl.textContent = "发送失败，请检查网络后重试";
-    }
-    btn.disabled = false;
-    btn.textContent = "发送重置邮件";
+    alert("如需重置密码，请联系管理员或使用注册邮箱在 Supabase 控制台重置。");
   });
 
   document.getElementById("logout-btn").addEventListener("click", async function () {
