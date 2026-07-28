@@ -93,8 +93,18 @@
   .winbar-head { display:flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; margin-bottom: 7px; color: var(--topbar-fg); opacity:.85; }
   .winbar-head > span:first-child { font-weight: 600; letter-spacing: .4px; }
   #win-pct-txt { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
-  .winbar { height: 10px; background: rgba(31,39,51,.08); border-radius: 99px; overflow: hidden; }
-  .winbar > i { display:block; height:100%; background: var(--brand); border-radius:99px; transition: width .4s ease; }
+  /* 收益率：中心原点进度条（0 在中间，盈利向右·红，亏损向左·绿） */
+  .winbar { position: relative; height: 10px; background: rgba(31,39,51,.08); border-radius: 99px; }
+  .winbar::after { content:""; position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background: rgba(31,39,51,.32); transform: translateX(-1px); border-radius:2px; }
+  .winbar > i { position:absolute; top:0; bottom:0; border-radius:99px; transition: width .45s cubic-bezier(.2,.7,.3,1), left .45s cubic-bezier(.2,.7,.3,1), background .3s; }
+  /* 表格 / 卡片内复用的迷你中心原点条 */
+  .roi-mini { position: relative; display:block; height: 6px; margin-top: 5px; background: rgba(31,39,51,.08); border-radius: 99px; }
+  .roi-mini::after { content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background: rgba(31,39,51,.32); transform: translateX(-1px); border-radius:2px; }
+  .roi-mini > i { position:absolute; top:0; bottom:0; border-radius:99px; }
+  /* 胜率三区：危险(0-30%)红 / 警示(30-40%)琥珀 / 安全(≥40%)绿 */
+  .wr-danger { color: var(--red) !important; }
+  .wr-warn { color: #f5a623 !important; }
+  .wr-safe { color: var(--green) !important; }
 
   /* Section card */
   .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-top: 18px; }
@@ -263,10 +273,10 @@
 
   /* Filters */
   .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  /* 历史记录：筛选(全部/红/黑) 与 导入导出清空 同处一行，右侧对齐、统一字体格式 */
-  .history-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .history-bar .filters { margin-bottom: 0; }
-  .history-bar .plan-ops { flex: 0 0 auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  /* 历史记录：筛选(全部/红/黑) 与 导入/导出/清空 始终同一行、两端对齐，手机/桌面一致 */
+  .history-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; margin-bottom: 12px; }
+  .history-bar .filters { margin-bottom: 0; flex: 0 0 auto; }
+  .history-bar .plan-ops { flex: 0 0 auto; display: flex; gap: 8px; flex-wrap: nowrap; align-items: center; }
   /* 历史记录操作栏：导入 / 导出(下拉) / 清空 三个同尺寸、同风格（两字、定宽居中），适配手机 */
   .history-bar .plan-ops .mini,
   #hist-export-wrap .c-select-trigger {
@@ -393,17 +403,15 @@
   table.cmp tbody tr { transition: background .15s; }
   table.cmp tbody tr:hover { background: #f7f9fe; }
 
-  /* 对比分析：标题与操作栏同一行（标题左、净盈亏+排序+导出右） */
+  /* 对比分析：标题 + 排序(盈亏) 居左，导出对比 居右；下拉按字数自适应宽度 */
   .cmp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cmp-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cmp-head-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .cmp-head h2 { margin: 0; }
-  .cmp-bar {
-    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-    justify-content: flex-end; margin: 0;
-  }
-  .cmp-bar .c-select-trigger { font-size: 13px; padding: 8px 28px 8px 11px; min-width: 110px; }
-  /* 导出下拉靠右对齐，且弹层宽度与触发器对齐（同尺寸 UI 框架） */
-  #cmp-export-wrap .c-select-trigger { min-width: 150px; }
-  #cmp-export-wrap .c-drop { left: auto; right: 0; min-width: 100%; width: 100%; max-width: none; }
+  .cmp-head .c-select-trigger { min-width: 0; max-width: 260px; }
+  /* 下拉弹层与触发器左对齐、宽度贴合文字（对齐颗粒度） */
+  #cmp-sort-wrap .c-drop,
+  #cmp-export-wrap .c-drop { left: 0; right: auto; min-width: 100%; width: max-content; max-width: min(280px, calc(100vw - 32px)); }
 
   /* 列表记录入场/退场动画 */
   @keyframes recIn { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
@@ -467,6 +475,14 @@
     .rec .event { font-size: 14px; }
     .modal-card { padding: 18px; }
     .modal-msg { font-size: 14px; }
+    /* 历史操作栏在窄屏进一步压缩，保证 全部/红/黑 + 导入/导出/清空 单行对齐 */
+    .history-bar { gap: 6px; }
+    .history-bar .filters .pill { padding: 6px 9px; font-size: 12.5px; }
+    .history-bar .plan-ops { gap: 6px; }
+    .history-bar .plan-ops .mini,
+    #hist-export-wrap .c-select-trigger { min-width: 56px; font-size: 12.5px; }
+    #hist-export-wrap .c-select-trigger { padding: 8px 30px 8px 10px; }
+    .cmp-head .c-select-trigger { font-size: 12.5px; }
   }
 
   /* ============ 夜间模式 ============ */
@@ -532,6 +548,10 @@
   html[data-theme="dark"] .cmp-row.total { background: linear-gradient(135deg, #1f2a44, #243049); }
   html[data-theme="dark"] .cmp-row.total .sub b { color: var(--text); }
   html[data-theme="dark"] .cmp-bar .c-select-trigger { background-color: #232b36; color: var(--text); border-color: var(--line); }
+  html[data-theme="dark"] .winbar,
+  html[data-theme="dark"] .roi-mini { background: rgba(255,255,255,.12); }
+  html[data-theme="dark"] .winbar::after,
+  html[data-theme="dark"] .roi-mini::after { background: rgba(255,255,255,.34); }
 
   /* 其它文字 / 边框 / 占位 */
   html[data-theme="dark"] .rec .meta { color: var(--muted); }
@@ -631,12 +651,14 @@
     <!-- Compare -->
     <div class="card">
       <div class="cmp-head">
-        <h2><span class="dot"></span>对比分析</h2>
-        <div class="cmp-bar">
+        <div class="cmp-head-left">
+          <h2><span class="dot"></span>对比分析</h2>
           <div class="c-select" id="cmp-sort-wrap">
             <div class="c-select-trigger" id="cmp-sort-trigger"><span id="cmp-sort-text">净盈亏（高→低）</span></div>
             <div class="c-drop" id="cmp-drop"></div>
           </div>
+        </div>
+        <div class="cmp-head-right">
           <div class="c-select" id="cmp-export-wrap">
             <div class="c-select-trigger" id="cmp-export-trigger"><span id="cmp-export-text">导出对比</span></div>
             <div class="c-drop" id="cmp-export-drop"></div>
@@ -965,13 +987,14 @@
     var netEl = document.getElementById("s-net");
     netEl.textContent = fmtMoney(s.net);
     netEl.className = "value " + (s.net > 0 ? "pos" : s.net < 0 ? "neg" : "");
-    document.getElementById("s-win").textContent = fmtPct(s.winRate);
+    var sWin = document.getElementById("s-win");
+    sWin.textContent = fmtPct(s.winRate);
+    sWin.className = "value " + winRateClass(s.winRate);
     var roi = s.input > 0 ? s.net / s.input : 0;
     var roiTxt = document.getElementById("win-pct-txt");
     roiTxt.textContent = fmtPct(roi);
-    roiTxt.style.color = roi > 0 ? "var(--red)" : roi < 0 ? "var(--green)" : "#fff";
-    var fill = Math.max(0, Math.min(roi * 100, 100));
-    document.getElementById("win-bar").style.width = fill + "%";
+    roiTxt.style.color = roi > 0 ? "var(--red)" : roi < 0 ? "var(--green)" : "var(--topbar-fg)";
+    document.getElementById("win-bar").setAttribute("style", roiFillStyle(roi));
   }
 
   // ---------- plan UI ----------
@@ -1170,8 +1193,8 @@
         "<td>" + fmtMoney(row.s.input) + "</td>" +
         "<td>" + fmtMoney(row.s.ret) + "</td>" +
         '<td class="' + netCls + '">' + fmtMoney(row.s.net) + "</td>" +
-        "<td>" + fmtPct(row.s.winRate) + "</td>" +
-        '<td class="' + netCls + '">' + fmtPct(row.roi) + "</td>" +
+        '<td class="' + winRateClass(row.s.winRate) + '">' + fmtPct(row.s.winRate) + "</td>" +
+        '<td class="' + netCls + '">' + fmtPct(row.roi) + roiMiniHtml(row.roi) + "</td>" +
         "</tr>";
     }).join("");
     box.innerHTML = head + body;
@@ -1184,7 +1207,7 @@
         '<span class="name">' + escapeHtml(row.p.name) + '</span>' +
         '<span class="net ' + netCls + '">' + fmtMoney(row.s.net) + '</span></div>' +
         '<div class="sub">笔数 <b>' + row.s.count + '</b> · 投入 <b>' + fmtMoney(row.s.input) +
-        '</b> · 返还 <b>' + fmtMoney(row.s.ret) + '</b> · 胜率 <b>' + fmtPct(row.s.winRate) +
+        '</b> · 返还 <b>' + fmtMoney(row.s.ret) + '</b> · 胜率 <b class="' + winRateClass(row.s.winRate) + '">' + fmtPct(row.s.winRate) +
         '</b> · 收益率 <b class="' + netCls + '">' + fmtPct(row.roi) + '</b></div></div>';
     }).join("");
     cards.innerHTML = rowHtml || '<div class="empty">还没有计划数据</div>';
@@ -1493,6 +1516,25 @@
     return n > 0 ? "#e83b3b" : "#1ba672";
   }
   function resultColor(s) { return s === "红" ? "#e83b3b" : s === "黑" ? "#1ba672" : "#5b6472"; }
+  // 胜率三区：危险(0-30%) / 警示(30-40%) / 安全(≥40%)
+  function winRateClass(wr) {
+    var p = (wr || 0) * 100;
+    if (p < 30) return "wr-danger";
+    if (p < 40) return "wr-warn";
+    return "wr-safe";
+  }
+  // 收益率中心原点条的内联样式：0 在中间，盈利向右(红)、亏损向左(绿)
+  function roiFillStyle(roi) {
+    var mag = Math.min(Math.abs(roi) * 100, 100) / 2; // 半宽 0~50%
+    if (mag <= 0) return "width:0%;background:var(--brand)";
+    var color = roi >= 0 ? "var(--red)" : "var(--green)";
+    var left = roi >= 0 ? "50%" : (50 - mag) + "%";
+    return "left:" + left + ";width:" + mag + "%;background:" + color;
+  }
+  function roiMiniHtml(roi) {
+    if (Math.min(Math.abs(roi) * 100, 100) / 2 <= 0) return "";
+    return '<span class="roi-mini"><i style="' + roiFillStyle(roi) + '"></i></span>';
+  }
   // 将表格（headers + rows）绘制为 PNG 图片并下载。rows 中每个单元格可为 字符串 或 {t, c}（c 为颜色）。
   function tableToPng(title, headers, rows, fname) {
     var scale = 2, padX = 28, padTop = 20, cellPadX = 14, headerH = 42, rowH = 40;
