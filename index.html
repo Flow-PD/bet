@@ -164,21 +164,19 @@
   table.cmp tr.total td:first-child { color: #16204a; }
   .pos { color: var(--red); } .neg { color: var(--green); }   /* 盈利=红 亏=绿（中国习惯） */
 
-  /* Compare mobile cards（手机端替代宽表，免横向滚动） */
-  .cmp-cards { display: none; flex-direction: column; gap: 12px; }
-  .cmp-card { border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; box-shadow: 0 2px 8px rgba(31,39,51,.05); }
-  .cmp-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-  .cmp-card-head .dot { width: 10px; height: 10px; border-radius: 99px; flex: 0 0 auto; }
-  .cmp-card-head .name { font-weight: 800; font-size: 15px; color: var(--text); word-break: break-word; }
-  .cmp-card-head .net { margin-left: auto; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .cmp-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 14px; }
-  .cmp-card-grid > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .cmp-card-grid .k { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .cmp-card-grid .v { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; word-break: break-word; }
-  /* 合计：独立品牌色卡片，明显区分 */
-  .cmp-card.total { margin-top: 4px; border-color: var(--brand); background: linear-gradient(135deg, #eaf0ff, #f4f8ff); box-shadow: 0 6px 18px rgba(59,110,245,.14); }
-  .cmp-card.total .name { color: var(--brand); }
-  .cmp-card.total .cmp-card-grid .v { color: #14224f; }
+  /* Compare mobile compact rows（手机端替代宽表，单行紧凑、省空间） */
+  .cmp-cards { display: none; flex-direction: column; gap: 8px; }
+  .cmp-row { border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; background: #fff; }
+  .cmp-row .top { display: flex; align-items: center; gap: 8px; }
+  .cmp-row .dot { width: 9px; height: 9px; border-radius: 99px; flex: 0 0 auto; }
+  .cmp-row .name { font-weight: 800; font-size: 14px; color: var(--text); word-break: break-word; }
+  .cmp-row .net { margin-left: auto; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cmp-row .sub { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .cmp-row .sub b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  /* 合计：独立品牌色行，明显区分 */
+  .cmp-row.total { border-color: var(--brand); background: linear-gradient(135deg, #eaf0ff, #f4f8ff); box-shadow: 0 4px 14px rgba(59,110,245,.12); }
+  .cmp-row.total .name { color: var(--brand); }
+  .cmp-row.total .sub b { color: #14224f; }
 
   /* List */
   .list { display: flex; flex-direction: column; gap: 10px; }
@@ -858,36 +856,25 @@
       });
     });
 
-    // 手机端卡片视图（与排序一致，合计独立成品牌色卡片）
-    var cardHtml = rows.map(function (row) {
+    // 手机端紧凑行视图（与排序一致，合计独立成品牌色行，省空间）
+    var rowHtml = rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
-      return '<div class="cmp-card">' +
-        '<div class="cmp-card-head"><span class="dot" style="background:' + row.p.color + '"></span>' +
+      return '<div class="cmp-row">' +
+        '<div class="top"><span class="dot" style="background:' + row.p.color + '"></span>' +
         '<span class="name">' + escapeHtml(row.p.name) + '</span>' +
         '<span class="net ' + netCls + '">' + fmtMoney(row.s.net) + '</span></div>' +
-        '<div class="cmp-card-grid">' +
-          cardItem("笔数", row.s.count) +
-          cardItem("总投入", fmtMoney(row.s.input)) +
-          cardItem("总返还", fmtMoney(row.s.ret)) +
-          cardItem("胜率", fmtPct(row.s.winRate)) +
-          cardItem("收益率", fmtPct(row.roi), netCls) +
-        '</div></div>';
+        '<div class="sub">笔数 <b>' + row.s.count + '</b> · 投入 <b>' + fmtMoney(row.s.input) +
+        '</b> · 返还 <b>' + fmtMoney(row.s.ret) + '</b> · 胜率 <b>' + fmtPct(row.s.winRate) +
+        '</b> · 收益率 <b class="' + netCls + '">' + fmtPct(row.roi) + '</b></div></div>';
     }).join("");
-    cardHtml += '<div class="cmp-card total">' +
-      '<div class="cmp-card-head"><span class="dot" style="background:var(--brand)"></span>' +
-      '<span class="name">合计（全部计划）</span>' +
+    rowHtml += '<div class="cmp-row total">' +
+      '<div class="top"><span class="dot" style="background:var(--brand)"></span>' +
+      '<span class="name">合计</span>' +
       '<span class="net ' + tcls + '">' + fmtMoney(total.net) + '</span></div>' +
-      '<div class="cmp-card-grid">' +
-        cardItem("笔数", total.count) +
-        cardItem("总投入", fmtMoney(total.input)) +
-        cardItem("总返还", fmtMoney(total.ret)) +
-        cardItem("胜率", fmtPct(total.winRate)) +
-        cardItem("收益率", fmtPct(troi), tcls) +
-      '</div></div>';
-    cards.innerHTML = cardHtml || '<div class="empty">还没有计划数据</div>';
-  }
-  function cardItem(k, v, cls) {
-    return '<div><span class="k">' + k + '</span><span class="v' + (cls ? " " + cls : "") + '">' + v + "</span></div>";
+      '<div class="sub">笔数 <b>' + total.count + '</b> · 投入 <b>' + fmtMoney(total.input) +
+      '</b> · 返还 <b>' + fmtMoney(total.ret) + '</b> · 胜率 <b>' + fmtPct(total.winRate) +
+      '</b> · 收益率 <b class="' + tcls + '">' + fmtPct(troi) + '</b></div></div>';
+    cards.innerHTML = rowHtml || '<div class="empty">还没有计划数据</div>';
   }
 
   // 对比分析：排序下拉（自定义组件）
