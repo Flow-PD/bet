@@ -904,11 +904,11 @@
    </div>
    <div class="topbar-inner">
     <h1>个人投注记录</h1>
-    <div class="sub" id="view-sub">全部记录</div>
+    <div class="sub" id="view-sub">计划：暴富计划</div>
     <div class="tb-plan">
       <div class="plan-sel">
         <div class="c-select" id="plan-select-wrap">
-          <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
+          <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">暴富计划</span></div>
           <div class="c-drop" id="plan-drop"></div>
         </div>
         <button class="tb-mini" id="add-plan-btn">新建计划</button>
@@ -1863,14 +1863,13 @@
   }
 
   function getEffectiveView() {
-    // 空字符串/无效 ID 一律视为第一个计划（永不自动选"全部"）
-    if (currentView === "all") return "all";
+    // 只能选单个计划，空/无效 ID 一律视为第一个计划
     if (currentView && getProfile(currentView)) return currentView;
-    return profiles[0] ? profiles[0].id : "all";
+    return profiles[0] ? profiles[0].id : "";
   }
   function renderStats() {
     var ev = getEffectiveView();
-    var rs = ev === "all" ? records : records.filter(function (r) { return r.profile === ev; });
+    var rs = records.filter(function (r) { return r.profile === ev; });
     var s = compute(rs);
     document.getElementById("s-input").textContent = fmtMoney(s.input);
     document.getElementById("s-return").textContent = fmtMoney(s.ret);
@@ -2297,23 +2296,19 @@
   function updateViewSub() {
     var ev = getEffectiveView();
     var p = getProfile(ev);
-    document.getElementById("view-sub").textContent = ev === "all"
-      ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
+    document.getElementById("view-sub").textContent = p ? ("计划：" + p.name) : "暂无计划";
   }
   function updatePlanButtons() {
-    var isPlan = currentView !== "all" && !!getProfile(currentView);
+    var isPlan = !!getProfile(currentView);
     document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
-    // "全部"视图下禁用删除（需先切到具体计划），单计划也允许删除（会补建默认计划）
+    // 只能选单个计划，单计划也允许删除（会补建默认计划）
     document.getElementById("del-plan-btn").disabled = !isPlan;
   }
   function renderPlanSelect() {
-    var opts = [{ value: "all", label: "全部" }].concat(
-      profiles.map(function (p) { return { value: p.id, label: p.name }; })
-    );
+    var opts = profiles.map(function (p) { return { value: p.id, label: p.name }; });
     var target;
-    if (currentView === "all") target = "all";
-    else if (currentView && getProfile(currentView)) target = currentView;
-    else target = profiles[0] ? profiles[0].id : "all";
+    if (currentView && getProfile(currentView)) target = currentView;
+    else target = profiles[0] ? profiles[0].id : "";
     if (!planDropCtrl) {
       planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
         opts, target, function (val) {
@@ -2362,7 +2357,7 @@
     var body = "<tbody>" + rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
       return "<tr>" +
-        '<td><span class="dot" style="background:' + row.p.color + '"></span>' + escapeHtml(row.p.name) + "</td>" +
+        "<td>" + escapeHtml(row.p.name) + "</td>" +
         "<td>" + row.s.count + "</td>" +
         "<td>" + fmtMoney(row.s.input) + "</td>" +
         "<td>" + fmtMoney(row.s.ret) + "</td>" +
@@ -2377,7 +2372,7 @@
     var rowHtml = rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
       return '<div class="cmp-row">' +
-        '<div class="top"><span class="dot" style="background:' + row.p.color + '"></span>' +
+        '<div class="top">' +
         '<span class="name">' + escapeHtml(row.p.name) + '</span>' +
         '<span class="net ' + netCls + '">' + fmtMoney(row.s.net) + '</span></div>' +
         '<div class="sub">笔数 <b>' + row.s.count + '</b> · 投入 <b>' + fmtMoney(row.s.input) +
@@ -2453,23 +2448,8 @@
     });
     if (records.length === 0) { box.innerHTML = '<div class="empty">还没有记录，添加第一笔吧 📝</div>'; return; }
 
-    if (currentView === "all") {
-      var html = "";
-      profiles.forEach(function (p) {
-        var rs = sortRecs(base.filter(function (r) { return r.profile === p.id; }));
-        if (rs.length === 0) return;
-        var s = compute(rs);
-        var netCls = s.net > 0 ? "pos" : s.net < 0 ? "neg" : "";
-        html += '<div class="list-group-head"><span class="dot" style="background:' + p.color + '"></span>' +
-          escapeHtml(p.name) + ' <span style="font-weight:400;opacity:.6;font-size:12px;">· ' + s.count + '笔</span>' +
-          '<span class="gg-net ' + netCls + '">' + fmtMoney(s.net) + '</span></div>';
-        html += rs.map(renderRec).join("");
-      });
-      box.innerHTML = html || '<div class="empty">没有符合条件的记录</div>';
-    } else {
-      var rs2 = sortRecs(base.filter(function (r) { return r.profile === getEffectiveView(); }));
-      box.innerHTML = rs2.length ? rs2.map(renderRec).join("") : '<div class="empty">没有符合条件的记录</div>';
-    }
+    var rs2 = sortRecs(base.filter(function (r) { return r.profile === getEffectiveView(); }));
+    box.innerHTML = rs2.length ? rs2.map(renderRec).join("") : '<div class="empty">没有符合条件的记录</div>';
     lastAddedId = null;
   }
 
