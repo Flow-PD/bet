@@ -28,7 +28,6 @@
   #auth-ui .auth-checks { margin-bottom: 8px; text-align: left; }
   #auth-ui .auth-check { display: block; font-size: 12.5px; color: var(--muted); cursor: pointer; padding: 4px 0; user-select: none; }
   #auth-ui .auth-check input { margin-right: 6px; vertical-align: middle; accent-color: var(--brand); }
-  #auth-ui .auth-note { margin-top: 20px; font-size: 12px; color: var(--muted); line-height: 1.6; }
   /* 密码框 + 小眼睛 */
   #auth-ui .auth-input-wrap { position: relative; display: flex; align-items: center; }
   #auth-ui .auth-input-wrap input { width: 100%; padding-right: 38px; }
@@ -48,21 +47,25 @@
   #auth-ui .auth-back-wrap a { font-size: 12.5px; color: var(--muted); text-decoration: none; }
   #auth-ui .auth-back-wrap a:hover { color: var(--brand); text-decoration: underline; }
 
+  /* 重置密码面板图标 */
+  .reset-icon-wrap { display: flex; justify-content: center; margin-top: 8px; }
+  .reset-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); padding: 12px; }
+
   /* 用户栏（顶栏内） */
   .user-bar { display: flex; align-items: center; justify-content: flex-end; padding: 0 0 12px; }
   .user-avatar-wrap { position: relative; }
   .user-avatar {
-    width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35);
-    background: rgba(255,255,255,.18); color: #fff; font-size: 15px; font-weight: 700;
+    width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff;
+    background: var(--brand); color: #fff; font-size: 15px; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    position: relative; transition: all .15s; font-family: inherit; backdrop-filter: blur(4px);
+    position: relative; transition: all .15s; font-family: inherit; box-shadow: 0 2px 8px rgba(0,0,0,.18);
   }
-  .user-avatar:hover { background: rgba(255,255,255,.3); border-color: rgba(255,255,255,.55); }
+  .user-avatar:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(59,110,245,.4); }
   .user-avatar .avatar-text { pointer-events: none; }
   .user-avatar .sync-dot {
     position: absolute; bottom: -1px; right: -1px; width: 11px; height: 11px;
-    border-radius: 50%; background: var(--green); border: 2px solid var(--topbar-bg, #1f3a5f);
-    flex-shrink: 0; transition: background .3s;
+    border-radius: 50%; background: var(--green); border: 2px solid #fff;
+    flex-shrink: 0; transition: background .3s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
   }
   .user-avatar .sync-dot.syncing { background: #f5a623; animation: pulse .8s infinite; }
   .user-avatar .sync-dot.error { background: var(--red); }
@@ -510,6 +513,7 @@
 
   /* Modal (替代原生 alert/confirm/prompt，本地文件下弹窗常被浏览器拦截) */
   .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal-overlay.open { display: flex; }
   .modal-card { background: #fff; border-radius: 16px; padding: 22px; max-width: 360px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.28); }
   .modal-msg { font-size: 15px; line-height: 1.6; margin-bottom: 18px; color: var(--text); white-space: pre-line; }
   .modal-actions { display: flex; gap: 10px; }
@@ -519,6 +523,23 @@
   .modal-ok.danger { background: var(--red); }
   .modal-input { width: 100%; border: 1.5px solid var(--line); border-radius: 11px; padding: 11px 12px; font-size: 15px; color: var(--text); background: #fbfcfe; outline: none; font-family: inherit; margin-bottom: 14px; }
   .modal-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background: #fff; }
+  .modal-btn { border: 1px solid var(--line); background: var(--brand); color: #fff; border-radius: 11px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .modal-btn:hover { opacity: .9; }
+
+  /* 头像 emoji + 切换按钮 */
+  .user-avatar .avatar-emoji { font-size: 18px; line-height: 1; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+  .user-drop-btn.avatar-change { color: var(--brand); }
+  .user-drop-btn.avatar-change:hover { background: var(--brand-soft); color: var(--brand); }
+
+  /* 头像选择网格 */
+  .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .avatar-item {
+    aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; cursor: pointer; border: 3px solid transparent; transition: all .15s; position: relative;
+  }
+  .avatar-item:hover { transform: scale(1.08); }
+  .avatar-item.active { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .avatar-item .check { position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
   .modal-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; display: block; }
 
   /* 可折叠卡片 */
@@ -771,19 +792,21 @@
     </div>
 
     <div id="auth-reset-panel" class="hidden">
-      <div class="auth-sub">输入注册邮箱，我们将发送重置链接</div>
-      <div class="auth-field">
-        <label for="auth-reset-email">邮箱</label>
-        <input type="email" id="auth-reset-email" placeholder="your@email.com" />
+      <div class="reset-icon-wrap">
+        <svg class="reset-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
       </div>
-      <button class="auth-btn" id="auth-reset-btn">发送重置邮件</button>
+      <div class="auth-sub" style="text-align:center;margin-top:12px">忘记密码？</div>
+      <div class="auth-sub" style="font-size:12.5px;color:var(--muted);margin-bottom:20px">输入你的注册邮箱，<br>我们会发送重置链接到该邮箱</div>
+      <div class="auth-field">
+        <label for="auth-reset-email">邮箱地址</label>
+        <input type="email" id="auth-reset-email" placeholder="your@email.com" autocomplete="email" />
+      </div>
+      <button class="auth-btn" id="auth-reset-btn">发送重置链接</button>
       <div class="auth-err" id="auth-reset-err"></div>
       <div class="auth-back-wrap">
         <a href="#" id="auth-reset-back">← 返回登录</a>
       </div>
     </div>
-
-    <div class="auth-note" id="auth-note">不同设备登录同一账号，数据自动同步。<br>首次使用请先「注册」，之后用「登录」。</div>
   </div>
 </div>
 
@@ -796,11 +819,12 @@
    <div class="user-bar">
      <div class="user-avatar-wrap" id="user-avatar-wrap">
        <button class="user-avatar" id="user-avatar" type="button" aria-label="账号菜单">
-         <span class="avatar-text" id="avatar-text">U</span>
+         <span class="avatar-emoji" id="avatar-emoji">🦁</span>
          <span class="sync-dot" id="sync-dot" title="云端同步状态"></span>
        </button>
        <div class="user-drop" id="user-drop">
          <div class="user-drop-email" id="user-drop-email"></div>
+         <button class="user-drop-btn avatar-change" id="avatar-change-btn" title="更换头像">🎨 更换头像</button>
          <button class="user-drop-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地数据</button>
          <button class="user-drop-btn logout" id="logout-btn">登出</button>
        </div>
@@ -943,6 +967,18 @@
     </div>
   </div>
 
+  <!-- 头像选择弹窗 -->
+  <div id="avatar-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 380px;">
+      <div class="modal-msg" style="font-weight:700;font-size:15px;margin-bottom:4px;">选择头像</div>
+      <div class="sub" style="font-size:12px;color:var(--muted);margin-bottom:14px;">挑一个你喜欢的吧</div>
+      <div class="avatar-grid" id="avatar-grid"></div>
+      <div class="modal-actions" style="margin-top:16px;justify-content:flex-end;">
+        <button class="modal-btn" id="avatar-modal-close">完成</button>
+      </div>
+    </div>
+  </div>
+
   <div id="dup-overlay" class="modal-overlay">
     <div class="modal-card" style="max-width: 560px;">
       <div class="modal-msg" id="dup-title" style="font-weight:700;font-size:15px;margin-bottom:12px;"></div>
@@ -1016,7 +1052,6 @@
     document.getElementById("auth-main-panel").classList.remove("hidden");
     document.getElementById("auth-reset-panel").classList.add("hidden");
     document.getElementById("auth-sub").textContent = "登录或注册以同步数据到云端";
-    document.getElementById("auth-note").style.display = "";
     // 恢复已保存的账号/密码
     var savedAcc = localStorage.getItem("bet_saved_acc");
     var savedPass = localStorage.getItem("bet_saved_pass");
@@ -1188,8 +1223,6 @@
     e.preventDefault();
     document.getElementById("auth-main-panel").classList.add("hidden");
     document.getElementById("auth-reset-panel").classList.remove("hidden");
-    document.getElementById("auth-sub").textContent = "重置密码";
-    document.getElementById("auth-note").style.display = "none";
     var savedAcc = localStorage.getItem("bet_saved_acc");
     document.getElementById("auth-reset-email").value = savedAcc || "";
   });
@@ -1198,7 +1231,6 @@
     document.getElementById("auth-reset-panel").classList.add("hidden");
     document.getElementById("auth-main-panel").classList.remove("hidden");
     document.getElementById("auth-sub").textContent = "登录或注册以同步数据到云端";
-    document.getElementById("auth-note").style.display = "";
   });
   // 发送重置邮件
   document.getElementById("auth-reset-btn").addEventListener("click", async function () {
@@ -1248,7 +1280,7 @@
     var user = (await supabase.auth.getUser()).data.user;
     if (!user) { showAuthUI(); return; }
     document.getElementById("user-drop-email").textContent = maskEmail(user.email);
-    document.getElementById("avatar-text").textContent = (user.email || "U").charAt(0).toUpperCase();
+    applyAvatar();
 
     // 加载云端数据
     setSyncDot("syncing");
@@ -1319,11 +1351,11 @@
     records.forEach(function (r) {
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
-    // 恢复上次选中的计划（默认进第一个计划，而非"全部"）
+    // 恢复上次选中的计划（默认进第一个计划，而非"全部"；永不自动选"全部"）
     try {
       var sv = localStorage.getItem(VIEW_KEY);
       if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
-      else currentView = profiles[0] ? profiles[0].id : "all";
+      else if (profiles[0]) currentView = profiles[0].id;
     } catch (e) {}
   }
 
@@ -1339,7 +1371,7 @@
     try {
       var sv = localStorage.getItem(VIEW_KEY);
       if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
-      else currentView = profiles[0] ? profiles[0].id : "all";  // 默认进第一个计划，而非"全部"
+      else if (profiles[0]) currentView = profiles[0].id;  // 默认进第一个计划，永不自动选"全部"
     } catch (e) {}
   }
 
@@ -1461,7 +1493,7 @@
   var PALETTE = ["#3b6ef5", "#e83b3b", "#1ba672", "#f5a623", "#8b5cf6", "#ec4899", "#06b6d4", "#64748b"];
   var profiles = [];
   var records = [];
-  var currentView = "all";   // "all" or profile id
+  var currentView = "";   // "" = 未初始化，将由 loadFromCloud/loadFromLocal 设为第一个计划 ID
   var resultFilter = "all";    // all / 红 / 黑
   var lastAddedId = null;      // 最近新增的记录，用于入场动画
 
@@ -1724,8 +1756,15 @@
     return String(n);
   }
 
+  function getEffectiveView() {
+    // 空字符串/无效 ID 一律视为第一个计划（永不自动选"全部"）
+    if (currentView === "all") return "all";
+    if (currentView && getProfile(currentView)) return currentView;
+    return profiles[0] ? profiles[0].id : "all";
+  }
   function renderStats() {
-    var rs = currentView === "all" ? records : records.filter(function (r) { return r.profile === currentView; });
+    var ev = getEffectiveView();
+    var rs = ev === "all" ? records : records.filter(function (r) { return r.profile === ev; });
     var s = compute(rs);
     document.getElementById("s-input").textContent = fmtMoney(s.input);
     document.getElementById("s-return").textContent = fmtMoney(s.ret);
@@ -1902,6 +1941,60 @@
     wrap.addEventListener("click", function (e) { e.stopPropagation(); });
   })();
 
+  // ---------- 预设头像 ----------
+  var PRESET_AVATARS = [
+    { e: "🦁", bg: "#f59e0b" }, { e: "🐯", bg: "#ef4444" }, { e: "🐼", bg: "#64748b" }, { e: "🦊", bg: "#f97316" },
+    { e: "🐧", bg: "#3b6ef5" }, { e: "🐸", bg: "#22c55e" }, { e: "🐙", bg: "#8b5cf6" }, { e: "🦄", bg: "#ec4899" },
+    { e: "🐺", bg: "#475569" }, { e: "🐝", bg: "#eab308" }, { e: "🚀", bg: "#6366f1" }, { e: "⚽", bg: "#14b8a6" }
+  ];
+  var AVATAR_KEY = "bet_avatar";
+  function getSavedAvatar() {
+    try {
+      var a = JSON.parse(localStorage.getItem(AVATAR_KEY));
+      if (a && a.e && a.bg) return a;
+    } catch (e) {}
+    return PRESET_AVATARS[0]; // 默认第一只 🦁
+  }
+  function applyAvatar() {
+    var a = getSavedAvatar();
+    var el = document.getElementById("avatar-emoji");
+    var btn = document.getElementById("user-avatar");
+    if (el) el.textContent = a.e;
+    if (btn) btn.style.background = a.bg;
+  }
+  function saveAvatar(a) {
+    try { localStorage.setItem(AVATAR_KEY, JSON.stringify(a)); } catch (e) {}
+    applyAvatar();
+  }
+  function renderAvatarGrid() {
+    var grid = document.getElementById("avatar-grid");
+    var cur = getSavedAvatar();
+    grid.innerHTML = PRESET_AVATARS.map(function (a, i) {
+      var active = (a.e === cur.e && a.bg === cur.bg) ? " active" : "";
+      var check = active ? '<span class="check">✓</span>' : "";
+      return '<div class="avatar-item' + active + '" data-i="' + i + '" style="background:' + a.bg + '" title="' + a.e + '">' + a.e + check + '</div>';
+    }).join("");
+    grid.querySelectorAll(".avatar-item").forEach(function (item) {
+      item.addEventListener("click", function () {
+        var idx = parseInt(this.getAttribute("data-i"), 10);
+        saveAvatar(PRESET_AVATARS[idx]);
+        renderAvatarGrid(); // 刷新选中态
+      });
+    });
+  }
+  document.getElementById("avatar-change-btn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    closeAllDrops();
+    renderAvatarGrid();
+    document.getElementById("avatar-modal").classList.add("open");
+  });
+  document.getElementById("avatar-modal-close").addEventListener("click", function () {
+    document.getElementById("avatar-modal").classList.remove("open");
+  });
+  document.getElementById("avatar-modal").addEventListener("click", function (e) {
+    if (e.target === this) this.classList.remove("open");
+  });
+
   // 排序下拉选项定义（始终高→低，选项标注方向，避免歧义）
   var CMP_SORT_OPTS = [
     { value: "net", label: "净盈亏（高→低）" },
@@ -1916,8 +2009,9 @@
   var datePickers = {};           // 自定义日期选择器控制器：f / m / dupN / dupO
 
   function updateViewSub() {
-    var p = getProfile(currentView);
-    document.getElementById("view-sub").textContent = currentView === "all"
+    var ev = getEffectiveView();
+    var p = getProfile(ev);
+    document.getElementById("view-sub").textContent = ev === "all"
       ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
   }
   function updatePlanButtons() {
@@ -1930,7 +2024,7 @@
     var opts = [{ value: "all", label: "全部" }].concat(
       profiles.map(function (p) { return { value: p.id, label: p.name }; })
     );
-    var target = (currentView !== "all" && getProfile(currentView)) ? currentView : "all";
+    var target = (currentView && currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : "all");
     if (!planDropCtrl) {
       planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
         opts, target, function (val) {
@@ -2084,7 +2178,7 @@
       });
       box.innerHTML = html || '<div class="empty">没有符合条件的记录</div>';
     } else {
-      var rs2 = sortRecs(base.filter(function (r) { return r.profile === currentView; }));
+      var rs2 = sortRecs(base.filter(function (r) { return r.profile === getEffectiveView(); }));
       box.innerHTML = rs2.length ? rs2.map(renderRec).join("") : '<div class="empty">没有符合条件的记录</div>';
     }
     lastAddedId = null;
