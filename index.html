@@ -2310,7 +2310,10 @@
     var opts = [{ value: "all", label: "全部" }].concat(
       profiles.map(function (p) { return { value: p.id, label: p.name }; })
     );
-    var target = (currentView && currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : "all");
+    var target;
+    if (currentView === "all") target = "all";
+    else if (currentView && getProfile(currentView)) target = currentView;
+    else target = profiles[0] ? profiles[0].id : "all";
     if (!planDropCtrl) {
       planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
         opts, target, function (val) {
