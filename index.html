@@ -256,7 +256,10 @@
     background: var(--panel-bg); border: 1px solid var(--panel-border);
     border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(31,39,51,.05);
   }
-  .tb-plan .plan-sel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tb-plan .plan-sel { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .tb-plan .c-select { flex: 1 1 auto; min-width: 0; }
+  .tb-plan .c-select-trigger { width: 100%; }
+  .tb-plan .tb-mini { flex: 0 0 auto; }
   .tb-plan-label { font-size: 13px; color: var(--topbar-fg); font-weight: 700; letter-spacing: .2px; opacity: .85; }
   .tb-mini {
     border: 1px solid var(--panel-border); background: rgba(255,255,255,.7); color: var(--topbar-fg);
@@ -268,7 +271,12 @@
   .tb-mini.del-plan:hover { background: #cf2f2f; border-color: #cf2f2f; color:#fff; }
   .tb-mini:disabled { opacity: .45; cursor: not-allowed; background: rgba(31,39,51,.06); border-color: var(--panel-border); color: var(--topbar-fg); }
   /* 蓝区内的下拉触发器：白底胶囊，与蓝底形成对比、保证可读 */
-  .topbar .c-select-trigger { background-color: #fff; border-color: var(--panel-border); color: var(--text); padding: 8px 30px 8px 13px; }
+  .topbar .c-select-trigger {
+    background-color: #fff; border-color: var(--panel-border); color: var(--text);
+    padding: 7px 30px 7px 12px; font-size: 12.5px; line-height: 1.3;
+    border-radius: 10px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
   .topbar .c-select.open .c-select-trigger { background-color: #fff; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 
   /* Filters */
@@ -574,7 +582,7 @@
     <div class="sub" id="view-sub">全部记录</div>
     <div class="tb-plan">
       <div class="plan-sel">
-        <button class="tb-mini" id="add-plan-btn">＋ 新建计划</button>
+        <button class="tb-mini" id="add-plan-btn">新建计划</button>
         <div class="c-select" id="plan-select-wrap">
           <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
           <div class="c-drop" id="plan-drop"></div>
@@ -585,7 +593,7 @@
     </div>
     <div class="stats">
       <div class="stat"><div class="label">总投入</div><div class="value" id="s-input">¥0</div></div>
-      <div class="stat"><div class="label">总返还</div><div class="value" id="s-return">¥0</div></div>
+      <div class="stat"><div class="label">总中奖金额</div><div class="value" id="s-return">¥0</div></div>
       <div class="stat"><div class="label">连红</div><div class="value" id="s-streak-red">0</div></div>
       <div class="stat"><div class="label">连黑</div><div class="value" id="s-streak-black">0</div></div>
       <div class="stat"><div class="label">净盈亏</div><div class="value" id="s-net">¥0</div></div>
@@ -739,6 +747,8 @@
 
   var PKEY = "bet_profiles_v2";
   var RKEY = "bet_records_v2";
+  var VIEW_KEY = "bet_view_v1";
+  function saveView() { try { localStorage.setItem(VIEW_KEY, currentView); } catch (e) {} }
   var PALETTE = ["#3b6ef5", "#e83b3b", "#1ba672", "#f5a623", "#8b5cf6", "#ec4899", "#06b6d4", "#64748b"];
   var profiles = [];
   var records = [];
@@ -757,6 +767,12 @@
     records.forEach(function (r) {
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
+    // 恢复上次选中的计划（仅当该计划仍存在）
+    try {
+      var sv = localStorage.getItem(VIEW_KEY);
+      if (sv === "all") currentView = "all";
+      else if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
+    } catch (e) {}
   }
   function saveProfiles() { try { localStorage.setItem(PKEY, JSON.stringify(profiles)); } catch (e) { if (window.console) console.warn("保存计划失败", e); } }
   function saveRecords() {
@@ -1028,8 +1044,8 @@
     var st = computeStreaks(rs);
     var sRed = document.getElementById("s-streak-red");
     var sBlack = document.getElementById("s-streak-black");
-    sRed.textContent = cnNum(st.red);
-    sBlack.textContent = cnNum(st.black);
+    sRed.textContent = String(st.red);
+    sBlack.textContent = String(st.black);
     sRed.style.color = st.red >= 1 ? "var(--red)" : "";
     sBlack.style.color = st.black >= 1 ? "var(--black)" : "";
   }
@@ -1155,7 +1171,7 @@
     { value: "roi", label: "收益率（高→低）" },
     { value: "winRate", label: "胜率（高→低）" },
     { value: "input", label: "总投入（高→低）" },
-    { value: "ret", label: "总返还（高→低）" },
+    { value: "ret", label: "总中奖金额（高→低）" },
     { value: "count", label: "笔数（高→低）" }
   ];
 
@@ -1180,7 +1196,7 @@
     if (!planDropCtrl) {
       planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
         opts, target, function (val) {
-          currentView = val;
+          currentView = val; saveView();
           updateViewSub();
           renderStats(); renderList(); updatePlanButtons();   // 切换筛选时同步
         });
@@ -1199,7 +1215,7 @@
     { key: "name", label: "计划", num: false },
     { key: "count", label: "笔数", num: true },
     { key: "input", label: "总投入", num: true },
-    { key: "ret", label: "总返还", num: true },
+    { key: "ret", label: "总中奖金额", num: true },
     { key: "net", label: "净盈亏", num: true },
     { key: "winRate", label: "胜率", num: true },
     { key: "roi", label: "收益率", num: true }
@@ -1493,7 +1509,7 @@
     showConfirm("⚠️ 删除计划「" + escapeHtml(p.name) + "」\n将同时删除该计划下的 " + cnt + " 条记录，\n此操作不可恢复！", function () {
       profiles = profiles.filter(function (x) { return x.id !== p.id; });
       records = records.filter(function (r) { return r.profile !== p.id; });
-      currentView = "all";
+      currentView = "all"; saveView();
       saveProfiles(); saveRecords(); renderAll();
     }, true);
   });
@@ -1667,7 +1683,7 @@
       return cmpSort.dir === "asc" ? va - vb : vb - va;
     });
     var r2 = function (n) { return Math.round((n || 0) * 100) / 100; };
-    var headers = ["计划", "笔数", "总投入", "总返还", "净盈亏", "胜率", "收益率"];
+    var headers = ["计划", "笔数", "总投入", "总中奖金额", "净盈亏", "胜率", "收益率"];
     var data = rows.map(function (row) {
       return [row.p.name, row.s.count, r2(row.s.input), r2(row.s.ret), r2(row.s.net), fmtPct(row.s.winRate), fmtPct(row.roi)];
     });
