@@ -280,16 +280,16 @@
   /* 历史记录操作栏：导入 / 导出(下拉) / 清空 三个同尺寸、同风格（两字、定宽居中），适配手机 */
   .history-bar .plan-ops .mini,
   #hist-export-wrap .c-select-trigger {
-    min-width: 72px; justify-content: center; text-align: center; box-sizing: border-box;
+    min-width: 78px; justify-content: center; text-align: center; box-sizing: border-box;
   }
   #hist-export-wrap .c-select-trigger {
-    /* 与 .mini 完全一致的视觉框：边框/圆角/字号/字重 */
+    /* 与 .mini 完全一致的视觉框：边框/圆角/字号/字重；左右内边距对称，使「导出」真正居中 */
     border: 1.5px solid var(--line); background:#fff; color: var(--text);
     font-size: 13px; font-weight: 600; border-radius: 11px;
-    padding: 9px 34px 9px 14px;
+    padding: 9px 26px 9px 26px;
   }
-  /* 导出下拉弹层：宽度贴合文字（完整显出 CSV/Excel 表格/图片），与触发器左对齐 */
-  #hist-export-wrap .c-drop { left: 0; right: auto; min-width: 100%; width: max-content; max-width: min(280px, calc(100vw - 24px)); }
+  /* 导出下拉弹层：与上方「对比分析」的导出下拉保持一致的左对齐 + 贴合文字宽度（完整显出 CSV/Excel 表格/图片） */
+  #hist-export-wrap .c-drop { left: 0; right: auto; min-width: 100%; width: max-content; max-width: min(280px, calc(100vw - 32px)); }
   .pill { border: 1.5px solid var(--line); background:#fff; color: var(--muted); padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
   /* 选中态：仅 红/黑 上色，「全部」保持中性（不改色），仅以边框加深表示已选 */
   .pill.on { border-color: var(--brand); color: var(--text); background:#fff; }
@@ -481,8 +481,8 @@
     .history-bar .filters .pill { padding: 6px 9px; font-size: 12.5px; }
     .history-bar .plan-ops { gap: 6px; }
     .history-bar .plan-ops .mini,
-    #hist-export-wrap .c-select-trigger { min-width: 56px; font-size: 12.5px; }
-    #hist-export-wrap .c-select-trigger { padding: 8px 30px 8px 10px; }
+    #hist-export-wrap .c-select-trigger { min-width: 64px; font-size: 12.5px; }
+    #hist-export-wrap .c-select-trigger { padding: 8px 22px 8px 22px; }
     .cmp-head .c-select-trigger { font-size: 12.5px; }
   }
 
@@ -628,17 +628,17 @@
           <span class="hint">不填就按奖金自动算</span>
         </div>
         <div class="field">
+          <label for="f-bonus">奖金</label>
+          <input type="number" id="f-bonus" placeholder="如 8888" min="0" step="0.01" inputmode="decimal" required />
+          <span class="hint">填 0 或留空自动判「黑」，填金额自动判「红」</span>
+        </div>
+        <div class="field">
           <label>结果</label>
           <div class="seg" id="f-seg">
             <label class="red" id="lab-red"><input type="radio" name="result" value="红" checked /><span>红 (命中)</span></label>
             <label class="black" id="lab-black"><input type="radio" name="result" value="黑" /><span>黑 (未中)</span></label>
           </div>
-          <span class="hint">选黑，本金照扣、奖金自动记 0</span>
-        </div>
-        <div class="field">
-          <label for="f-bonus">奖金</label>
-          <input type="number" id="f-bonus" placeholder="如 8888" min="0" step="0.01" inputmode="decimal" required />
-          <span class="hint">不填就按赔率自动算</span>
+          <span class="hint">由奖金自动判断，也可手动改；选黑本金照扣、奖金记 0</span>
         </div>
         <div class="field full">
           <div class="actions">
@@ -1373,7 +1373,16 @@
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
     if (val === "黑") { if (addEls.bonus.value === "") addEls.bonus.value = "0"; }
-    else { var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0; if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
+    else { if (addEls.bonus.value === "") { var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0; if (O > 0) addEls.bonus.value = numStr(Math.round(A * O * 100) / 100); } }
+  }
+  // 奖金驱动结果：填 0 / 留空 → 自动判黑；填非零金额 → 自动判红
+  function autoResultFromBonus() {
+    var raw = addEls.bonus.value;
+    var b = parseFloat(raw);
+    var target = (raw === "" || isNaN(b) || b <= 0) ? "黑" : "红";
+    if (getAddResult() === target) return;
+    var radio = document.querySelector('input[name="result"][value="' + target + '"]');
+    if (radio) { radio.checked = true; syncSeg(); }
   }
   document.querySelectorAll('input[name="result"]').forEach(function (el) { el.addEventListener("change", syncSeg); });
   syncSeg();
@@ -1381,6 +1390,7 @@
   ["f-amount", "f-bonus", "f-odds"].forEach(function (id) {
     document.getElementById(id).addEventListener("input", function () { addRecalc(id.replace("f-", "")); });
   });
+  document.getElementById("f-bonus").addEventListener("input", autoResultFromBonus);
 
   // 添加表单可折叠
   document.getElementById("add-toggle").addEventListener("click", function () {
