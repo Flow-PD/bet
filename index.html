@@ -352,25 +352,6 @@
   </div>
 
   <div class="wrap">
-    <!-- Profiles -->
-    <div class="card">
-      <h2><span class="dot"></span>计划</h2>
-      <div class="plan-bar">
-        <div class="plan-sel">
-          <span class="plan-label">查看</span>
-          <div class="c-select" id="plan-select-wrap">
-            <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
-            <div class="c-drop" id="plan-drop"></div>
-          </div>
-        </div>
-        <div class="plan-ops">
-          <button class="mini" id="rename-plan-btn" title="修改计划名称">✎ 改名</button>
-          <button class="mini del-plan" id="del-plan-btn" title="删除当前计划">✕ 删除</button>
-          <button class="mini" id="add-plan-btn">＋ 新建计划</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Add form -->
     <div class="card">
       <h2><span class="dot"></span>添加投注记录
@@ -385,6 +366,14 @@
         <div class="field">
           <label for="f-event">赛事名称</label>
           <input type="text" id="f-event" placeholder="例如：001 平平/平胜" required />
+        </div>
+        <div class="field">
+          <label>计划</label>
+          <div class="c-select" id="form-plan-wrap">
+            <div class="c-select-trigger" id="form-plan-trigger"><span id="form-plan-text">我自己</span></div>
+            <div class="c-drop" id="form-plan-drop"></div>
+          </div>
+          <span class="hint">这条记录归到哪个计划</span>
         </div>
         <div class="field">
           <label for="f-amount">投注金额</label>
@@ -441,13 +430,25 @@
 
     <!-- List -->
     <div class="card">
-      <div class="toolbar" style="margin-bottom:14px;">
+      <div class="toolbar" style="margin-bottom:14px; flex-direction: column; align-items: stretch; gap: 12px;">
         <h2 style="margin:0;"><span class="dot"></span>历史记录</h2>
-        <div class="right">
-          <button class="mini" id="import-btn">导入 CSV</button>
-          <button class="mini" id="export-btn">导出 CSV</button>
-          <button class="mini danger" id="clear-btn">清空</button>
-          <input type="file" id="import-file" accept=".csv,text/csv" style="display:none" />
+        <div class="plan-bar">
+          <div class="plan-sel">
+            <span class="plan-label">计划</span>
+            <div class="c-select" id="plan-select-wrap">
+              <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
+              <div class="c-drop" id="plan-drop"></div>
+            </div>
+            <button class="mini" id="rename-plan-btn" title="修改计划名称">✎ 改名</button>
+            <button class="mini del-plan" id="del-plan-btn" title="删除当前计划">✕ 删除</button>
+            <button class="mini" id="add-plan-btn">＋ 新建</button>
+          </div>
+          <div class="plan-ops">
+            <button class="mini" id="import-btn">导入</button>
+            <button class="mini" id="export-btn">导出</button>
+            <button class="mini danger" id="clear-btn">清空</button>
+            <input type="file" id="import-file" accept=".csv,text/csv" style="display:none" />
+          </div>
         </div>
       </div>
       <div class="filters" id="filters">
@@ -646,6 +647,7 @@
     addBtn("保存新记录（都保留）", "dup-save", function () {
       var nr = readDupRec("N");
       closeDup();
+      if (currentView !== "all" && currentView !== nr.profile) currentView = nr.profile;
       records.push(nr); lastAddedId = nr.id; saveRecords(); afterAddReset(); renderAll();
     });
     addBtn("用新版覆盖旧版", "dup-overwrite", function () {
@@ -653,6 +655,7 @@
       closeDup();
       oldRec.profile = nr.profile; oldRec.date = nr.date; oldRec.event = nr.event;
       oldRec.amount = nr.amount; oldRec.odds = nr.odds; oldRec.result = nr.result; oldRec.bonus = nr.bonus;
+      if (currentView !== "all" && currentView !== nr.profile) currentView = nr.profile;
       saveRecords(); afterAddReset(); renderAll();
     });
     addBtn("保留旧版（不添加）", "dup-keep", function () { closeDup(); afterAddReset(); });
@@ -797,12 +800,17 @@
     { value: "count", label: "笔数" }
   ];
 
-  var planDropCtrl, cmpDropCtrl;  // 下拉控制器
+  var planDropCtrl, cmpDropCtrl, formPlanCtrl;  // 下拉控制器
 
   function updateViewSub() {
     var p = getProfile(currentView);
     document.getElementById("view-sub").textContent = currentView === "all"
       ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
+  }
+  function updatePlanButtons() {
+    var isPlan = currentView !== "all" && !!getProfile(currentView);
+    document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
+    document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
   }
   function renderPlanSelect() {
     var opts = [{ value: "all", label: "全部" }].concat(
@@ -814,16 +822,28 @@
         opts, target, function (val) {
           currentView = val;
           updateViewSub();
-          renderPlans(); renderStats(); renderList();
+          renderStats(); renderList(); renderFormPlan(); updatePlanButtons();   // 切换筛选时同步
         });
     } else {
       planDropCtrl.setOptions(opts);   // 关键：改名/新建/删除后即时刷新备选项
       planDropCtrl.setValue(target);
     }
     updateViewSub();
-    var isPlan = currentView !== "all" && !!getProfile(currentView);
-    document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
-    document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
+    updatePlanButtons();
+    renderFormPlan();
+  }
+  // 添加表单里的「计划」下拉：仅为真实计划（不含「全部」），决定这条记录归到哪个计划
+  function renderFormPlan() {
+    if (!document.getElementById("form-plan-wrap")) return;
+    var pOpts = profiles.map(function (p) { return { value: p.id, label: p.name }; });
+    var def = (currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : "");
+    if (!formPlanCtrl) {
+      formPlanCtrl = initCustomDrop("form-plan-wrap", "form-plan-trigger", "form-plan-drop", "form-plan-text",
+        pOpts, def, function () {});
+    } else {
+      formPlanCtrl.setOptions(pOpts);
+      if (!getProfile(formPlanCtrl.getValue())) formPlanCtrl.setValue(def);
+    }
   }
   function renderPlans() { renderPlanSelect(); }
 
@@ -1049,7 +1069,7 @@
       parseFloat(document.getElementById("f-bonus").value));
     var rec = {
       id: uid(),
-      profile: (currentView !== "all" && getProfile(currentView)) ? currentView : (profiles[0] ? profiles[0].id : ""),
+      profile: formPlanCtrl.getValue() || (profiles[0] ? profiles[0].id : ""),
       date: document.getElementById("f-date").value,
       event: document.getElementById("f-event").value.trim(),
       amount: dm.amount,
@@ -1069,6 +1089,8 @@
     lastAddedId = rec.id;
     records.push(rec);
     saveRecords();
+    // 若当前只筛选某计划、而新记录属于另一计划，则跳到该计划确保可见
+    if (currentView !== "all" && currentView !== rec.profile) currentView = rec.profile;
     renderAll();
     afterAddReset();
   });
