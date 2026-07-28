@@ -22,6 +22,7 @@
     --red-soft: #fdeaea;
     --black: #2b3340;
     --black-soft: #eceff3;
+    --black-ink: #2b3340;     /* "黑"文字/前景色（夜间自动转浅，避免深字配深底） */
     --green: #1ba672;
     --shadow: 0 6px 24px rgba(31,39,51,.08);
     --radius: 16px;
@@ -219,7 +220,7 @@
   }
   .seg input { display: none; }
   .seg label.red.on { background: var(--red-soft); border-color: var(--red); color: var(--red); }
-  .seg label.black.on { background: var(--black-soft); border-color: var(--black); color: var(--black); }
+  .seg label.black.on { background: var(--black-soft); border-color: var(--black); color: var(--black-ink); }
   .hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 1px; }
   .actions { display:flex; gap: 10px; margin-top: 4px; }
   .btn { border: none; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: transform .08s, opacity .15s; flex: 1; }
@@ -377,7 +378,7 @@
   .rec-right { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .rec .tag { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
   .rec .tag.red { background: var(--red-soft); color: var(--red); }
-  .rec .tag.black { background: var(--black-soft); color: var(--black); }
+  .rec .tag.black { background: var(--black-soft); color: var(--black-ink); }
   .rec .meta { display:flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: #4a5464; }
   .rec .meta b { color: var(--text); font-variant-numeric: tabular-nums; }
   .rec .meta .pl.pos { color: var(--red); font-weight: 700; }
@@ -386,7 +387,7 @@
   .rec.red-event { border-left: 4px solid var(--red); }
   .rec.red-event .event { color: var(--red); font-weight: 800; }
   .rec.black-event { border-left: 4px solid var(--black); }
-  .rec.black-event .event { color: var(--black); font-weight: 800; }
+  .rec.black-event .event { color: var(--black-ink); font-weight: 800; }
   /* 添加重复时的对比弹窗 */
   .dup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 480px) { .dup-grid { grid-template-columns: 1fr; } }
@@ -531,6 +532,7 @@
   html[data-theme="dark"] {
     --bg: linear-gradient(135deg, #1c2533 0%, #14181f 55%, #10141b 100%); --card: #1c222b; --text: #e6e9ef; --muted: #aebacb;
     --line: #2c3441; --brand-soft: #1f2a44; --red-soft: #3a2326; --black-soft: #262d38;
+    --black: #4a5464; --black-ink: #cdd5e0;   /* 夜间：黑底提亮、黑字转浅，深字深底问题消除 */
     --shadow: 0 6px 24px rgba(0,0,0,.40);
     /* 夜间：顶部栏与面板恢复深色，结构性强调色转为浅中性 */
     --topbar-bg: linear-gradient(135deg, #232c3d, #33405a);
@@ -544,7 +546,7 @@
   html[data-theme="dark"] body { background: var(--bg); color: var(--text); }
   html[data-theme="dark"] .card { background: var(--card); }
   /* 夜间：次要文字原本靠 opacity 压暗，在深色底上偏灰、看不清 → 提高可读性 */
-  html[data-theme="dark"] .stat .label { opacity: .9; }
+  html[data-theme="dark"] .stat .label { opacity: 1; }
   html[data-theme="dark"] .topbar .sub { opacity: .9; }
   html[data-theme="dark"] .tb-plan-label { opacity: 1; }
 
@@ -581,10 +583,13 @@
   html[data-theme="dark"] .mini:hover,
   html[data-theme="dark"] .modal-input:focus { background-color: #2b3441; }
 
-  /* 顶部栏内的下拉保持白底（在深色顶栏上更清晰） */
+  /* 顶部栏内的下拉保持白底（在深色顶栏上更清晰），文字用深色保证对比 */
   html[data-theme="dark"] .topbar .c-select-trigger,
-  html[data-theme="dark"] .topbar .c-select.open .c-select-trigger { background-color: rgba(255,255,255,.92); color: var(--text); border-color: transparent; }
-  html[data-theme="dark"] .topbar .c-drop { background: #fff; color: var(--text); border-color: var(--line); }
+  html[data-theme="dark"] .topbar .c-select.open .c-select-trigger { background-color: rgba(255,255,255,.94); color: #1f2733; border-color: transparent; }
+  html[data-theme="dark"] .topbar .c-drop { background: #fff; color: #1f2733; border-color: var(--line); }
+  html[data-theme="dark"] .topbar .c-drop .c-opt { color: #1f2733; }
+  html[data-theme="dark"] .topbar .c-drop .c-opt:hover { background: #eef1f5; color: #1f2733; }
+  html[data-theme="dark"] .topbar .c-drop .c-opt.active { background: #cdd5e0; color: #1a1f27; }
 
   /* 表格 / 对比卡片在夜间 */
   html[data-theme="dark"] table.cmp th { background: #232b36; color: var(--text); }
@@ -607,6 +612,19 @@
   html[data-theme="dark"] .c-date-trigger .ph { color: #6b7689; }
   html[data-theme="dark"] .section-toggle:hover { background: #243049; }
   html[data-theme="dark"] .dup-col.new { background: #1f2a44; }
+
+  /* 夜间：所有下拉弹层统一深色底 + 浅色字（顶部栏白底弹层由上方规则单独处理） */
+  html[data-theme="dark"] .c-drop { background: #2b3441; border-color: var(--line); }
+  html[data-theme="dark"] .c-opt { color: var(--text); }
+  html[data-theme="dark"] .c-opt:hover { background: #3a4453; color: #fff; }
+  html[data-theme="dark"] .c-opt.active { background: var(--brand); color: #1a1f27; }
+  /* 历史记录「导出」下拉触发器：夜间改深色底（原本白底配浅字看不清） */
+  html[data-theme="dark"] #hist-export-wrap .c-select-trigger,
+  html[data-theme="dark"] #hist-export-wrap .c-select.open .c-select-trigger { background-color: #232b36; color: var(--text); border-color: var(--line); }
+  /* 顶部栏「新建计划 / 自定义」按钮：夜间改白底深字，与白底下拉触发器统一（删除按钮保持红底） */
+  html[data-theme="dark"] .tb-mini:not(.del-plan) { background-color: rgba(255,255,255,.94); color: #1f2733; border-color: transparent; }
+  html[data-theme="dark"] .tb-mini:not(.del-plan):hover { background-color: #fff; }
+  html[data-theme="dark"] .tb-mini:disabled { background: rgba(255,255,255,.3); color: rgba(255,255,255,.5); border-color: transparent; }
 </style>
 </head>
 <body>
@@ -1130,7 +1148,7 @@
     } else { sRed.style.color = ""; sRed.style.fontWeight = ""; sRed.style.textShadow = ""; }
     // 连黑：激活时深色 + 加粗 + 辉光
     if (st.black >= 1) {
-      sBlack.style.color = "var(--black)";
+      sBlack.style.color = "var(--black-ink)";
       sBlack.style.fontWeight = "800";
       sBlack.style.textShadow = "0 0 12px rgba(43,51,64,.30)";
     } else { sBlack.style.color = ""; sBlack.style.fontWeight = ""; sBlack.style.textShadow = ""; }
