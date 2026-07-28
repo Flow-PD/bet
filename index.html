@@ -38,7 +38,7 @@
     padding: 4px; display: flex; align-items: center; justify-content: center;
     width: 30px; height: 30px; border-radius: 6px; transition: all .15s;
   }
-  #auth-ui .auth-eye:hover { color: var(--text); background: var(--brand-soft); }
+  #auth-ui .auth-eye:hover, #auth-ui .auth-eye.on { color: var(--brand); background: var(--brand-soft); }
   #auth-ui .auth-eye svg { width: 18px; height: 18px; pointer-events: none; }
   /* 忘记密码 / 返回登录 */
   #auth-ui .auth-forgot-wrap { text-align: right; margin: -6px 0 8px; }
@@ -49,15 +49,44 @@
   #auth-ui .auth-back-wrap a:hover { color: var(--brand); text-decoration: underline; }
 
   /* 用户栏（顶栏内） */
-  .user-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; }
-  .user-bar .user-email { font-size: 12px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .user-bar .user-btn { border: 1px solid var(--line); background: var(--card); color: var(--muted); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
-  .user-bar .user-btn:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
-  .user-bar .user-btn.migrate { color: var(--brand); border-color: var(--brand); }
-  .user-bar .user-btn.migrate:hover { background: var(--brand-soft); }
-  .user-bar .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; transition: background .3s; }
-  .user-bar .sync-dot.syncing { background: #f5a623; animation: pulse .8s infinite; }
-  .user-bar .sync-dot.error { background: var(--red); }
+  .user-bar { display: flex; align-items: center; justify-content: flex-end; padding: 0 0 12px; }
+  .user-avatar-wrap { position: relative; }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35);
+    background: rgba(255,255,255,.18); color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: relative; transition: all .15s; font-family: inherit; backdrop-filter: blur(4px);
+  }
+  .user-avatar:hover { background: rgba(255,255,255,.3); border-color: rgba(255,255,255,.55); }
+  .user-avatar .avatar-text { pointer-events: none; }
+  .user-avatar .sync-dot {
+    position: absolute; bottom: -1px; right: -1px; width: 11px; height: 11px;
+    border-radius: 50%; background: var(--green); border: 2px solid var(--topbar-bg, #1f3a5f);
+    flex-shrink: 0; transition: background .3s;
+  }
+  .user-avatar .sync-dot.syncing { background: #f5a623; animation: pulse .8s infinite; }
+  .user-avatar .sync-dot.error { background: var(--red); }
+  .user-avatar .sync-dot.off { background: var(--muted); }
+  /* 下拉菜单 */
+  .user-drop {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 9999;
+    min-width: 200px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: 0 10px 32px rgba(31,39,51,.14), 0 2px 8px rgba(31,39,51,.06);
+    padding: 6px; animation: dropIn .18s ease;
+  }
+  .user-avatar-wrap.open .user-drop { display: block; }
+  .user-drop-email {
+    padding: 10px 12px 8px; font-size: 13px; font-weight: 600; color: var(--text);
+    border-bottom: 1px solid var(--line); margin-bottom: 4px; word-break: break-all;
+  }
+  .user-drop-btn {
+    width: 100%; text-align: left; border: none; background: none; color: var(--text);
+    padding: 9px 12px; border-radius: 8px; font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: background .12s; font-family: inherit;
+  }
+  .user-drop-btn:hover { background: var(--brand-soft); color: var(--brand); }
+  .user-drop-btn.logout:hover { background: var(--red-soft); color: var(--red); }
+  .user-drop-btn.migrate { color: var(--brand); }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
   /* 应用主体默认隐藏，登录后才显示 */
@@ -121,7 +150,7 @@
   /* Header */
   .topbar {
     width: 100%;
-    max-width: 860px;
+    max-width: 828px;
     margin: 16px auto 0;
     background: var(--topbar-bg);
     color: var(--topbar-fg); border-radius: var(--radius);
@@ -692,6 +721,12 @@
   html[data-theme="dark"] .c-opt { color: var(--text); }
   html[data-theme="dark"] .c-opt:hover { background: #3a4453; color: #fff; }
   html[data-theme="dark"] .c-opt.active { background: var(--brand); color: #1a1f27; }
+  /* 夜间：头像下拉菜单 */
+  html[data-theme="dark"] .user-drop { background: #2b3441; border-color: var(--line); }
+  html[data-theme="dark"] .user-drop-email { color: var(--text); border-bottom-color: var(--line); }
+  html[data-theme="dark"] .user-drop-btn { color: var(--text); }
+  html[data-theme="dark"] .user-drop-btn:hover { background: #3a4453; color: #fff; }
+  html[data-theme="dark"] .user-drop-btn.logout:hover { background: rgba(232,59,59,.18); color: var(--red); }
   /* 历史记录「导出」下拉触发器：夜间改深色底（原本白底配浅字看不清） */
   html[data-theme="dark"] #hist-export-wrap .c-select-trigger,
   html[data-theme="dark"] #hist-export-wrap .c-select.open .c-select-trigger { background-color: #232b36; color: var(--text); border-color: var(--line); }
@@ -759,10 +794,17 @@
   <div class="page" id="page">
   <div class="topbar">
    <div class="user-bar">
-     <span class="sync-dot" id="sync-dot" title="云端同步状态"></span>
-     <span class="user-email" id="user-email"></span>
-     <button class="user-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地</button>
-     <button class="user-btn" id="logout-btn">登出</button>
+     <div class="user-avatar-wrap" id="user-avatar-wrap">
+       <button class="user-avatar" id="user-avatar" type="button" aria-label="账号菜单">
+         <span class="avatar-text" id="avatar-text">U</span>
+         <span class="sync-dot" id="sync-dot" title="云端同步状态"></span>
+       </button>
+       <div class="user-drop" id="user-drop">
+         <div class="user-drop-email" id="user-drop-email"></div>
+         <button class="user-drop-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地数据</button>
+         <button class="user-drop-btn logout" id="logout-btn">登出</button>
+       </div>
+     </div>
    </div>
    <div class="topbar-inner">
     <h1>个人投注记录</h1>
@@ -1038,13 +1080,21 @@
     });
   })();
 
-  // 密码显示/隐藏切换
-  document.getElementById("auth-eye").addEventListener("click", function () {
+  // 密码：悬浮/按住眼睛时显示，离开恢复隐藏
+  (function () {
+    var eye = document.getElementById("auth-eye");
     var input = document.getElementById("auth-pass");
-    var isHidden = input.type === "password";
-    input.type = isHidden ? "text" : "password";
-    this.setAttribute("aria-label", isHidden ? "隐藏密码" : "显示密码");
-  });
+    function show() { input.type = "text"; eye.classList.add("on"); }
+    function hide() { input.type = "password"; eye.classList.remove("on"); }
+    eye.addEventListener("mouseenter", show);
+    eye.addEventListener("mouseleave", hide);
+    eye.addEventListener("mousedown", show);
+    eye.addEventListener("mouseup", hide);
+    // 移动端：触摸按住显示，松开隐藏
+    eye.addEventListener("touchstart", function (e) { e.preventDefault(); show(); }, { passive: false });
+    eye.addEventListener("touchend", function (e) { e.preventDefault(); hide(); }, { passive: false });
+    eye.addEventListener("touchcancel", hide);
+  })();
 
   document.getElementById("auth-submit-btn").addEventListener("click", async function () {
     var emailInput = document.getElementById("auth-email");
@@ -1197,7 +1247,8 @@
     showAppUI();
     var user = (await supabase.auth.getUser()).data.user;
     if (!user) { showAuthUI(); return; }
-    document.getElementById("user-email").textContent = user.email;
+    document.getElementById("user-drop-email").textContent = maskEmail(user.email);
+    document.getElementById("avatar-text").textContent = (user.email || "U").charAt(0).toUpperCase();
 
     // 加载云端数据
     setSyncDot("syncing");
@@ -1230,7 +1281,7 @@
     dot.className = "sync-dot";
     if (state === "syncing") dot.classList.add("syncing");
     else if (state === "error") dot.classList.add("error");
-    else if (state === "off") dot.style.background = "#ccc";
+    else if (state === "off") dot.classList.add("off");
   }
 
   // ========== 云端数据操作 ==========
@@ -1832,8 +1883,24 @@
   function closeAllDrops() {
     document.querySelectorAll(".c-select.open").forEach(function (el) { el.classList.remove("open"); });
     document.querySelectorAll(".c-date.open").forEach(function (el) { el.classList.remove("open"); });
+    var ua = document.getElementById("user-avatar-wrap");
+    if (ua) ua.classList.remove("open");
   }
   document.addEventListener("click", function () { closeAllDrops(); });
+
+  // 头像下拉菜单
+  (function () {
+    var wrap = document.getElementById("user-avatar-wrap");
+    var avatar = document.getElementById("user-avatar");
+    if (!wrap || !avatar) return;
+    avatar.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var isOpen = wrap.classList.contains("open");
+      closeAllDrops();
+      if (!isOpen) wrap.classList.add("open");
+    });
+    wrap.addEventListener("click", function (e) { e.stopPropagation(); });
+  })();
 
   // 排序下拉选项定义（始终高→低，选项标注方向，避免歧义）
   var CMP_SORT_OPTS = [
