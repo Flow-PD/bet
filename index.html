@@ -73,13 +73,25 @@
   }
   .topbar-inner { padding: 16px; }
   /* 主题切换按钮：固定在顶部栏右上角 */
-  .theme-toggle {
-    position: absolute; top: 12px; right: 12px; z-index: 20;
-    border: 1px solid var(--panel-border); background: rgba(255,255,255,.6); color: var(--topbar-fg);
-    padding: 5px 11px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer;
-    font-family: inherit; transition: all .15s; backdrop-filter: blur(4px);
+  /* 主题切换 FAB：悬浮屏幕右下角、可拖拽（太阳 / 月亮图标） */
+  .theme-fab {
+    position: fixed; right: 18px; bottom: 18px; z-index: 1200;
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; line-height: 1; padding: 0;
+    background: var(--topbar-bg); color: var(--topbar-fg);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    cursor: grab; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent;
+    font-family: inherit; backdrop-filter: blur(6px);
+    transition: box-shadow .15s ease, transform .12s ease;
   }
-  .theme-toggle:hover { background: rgba(255,255,255,.92); border-color: #c4ccd8; }
+  .theme-fab:hover { box-shadow: 0 8px 22px rgba(0,0,0,.26); }
+  .theme-fab:active { cursor: grabbing; }
+  .theme-fab.dragging { transition: none; box-shadow: 0 12px 28px rgba(0,0,0,.32); }
+  @media (max-width: 480px) {
+    .theme-fab { width: 48px; height: 48px; font-size: 20px; right: 14px; bottom: 14px; }
+  }
   .topbar h1 { margin: 0 0 4px; font-size: 23px; font-weight: 800; letter-spacing: .6px; text-align: center; color: var(--topbar-fg); }
   .topbar .sub { font-size: 12.5px; color: var(--topbar-fg); opacity: .68; margin-bottom: 14px; text-align: center; letter-spacing: .3px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -517,7 +529,7 @@
 
   /* ============ 夜间模式 ============ */
   html[data-theme="dark"] {
-    --bg: linear-gradient(135deg, #1c2533 0%, #14181f 55%, #10141b 100%); --card: #1c222b; --text: #e6e9ef; --muted: #93a0b4;
+    --bg: linear-gradient(135deg, #1c2533 0%, #14181f 55%, #10141b 100%); --card: #1c222b; --text: #e6e9ef; --muted: #aebacb;
     --line: #2c3441; --brand-soft: #1f2a44; --red-soft: #3a2326; --black-soft: #262d38;
     --shadow: 0 6px 24px rgba(0,0,0,.40);
     /* 夜间：顶部栏与面板恢复深色，结构性强调色转为浅中性 */
@@ -531,6 +543,10 @@
   }
   html[data-theme="dark"] body { background: var(--bg); color: var(--text); }
   html[data-theme="dark"] .card { background: var(--card); }
+  /* 夜间：次要文字原本靠 opacity 压暗，在深色底上偏灰、看不清 → 提高可读性 */
+  html[data-theme="dark"] .stat .label { opacity: .9; }
+  html[data-theme="dark"] .topbar .sub { opacity: .9; }
+  html[data-theme="dark"] .tb-plan-label { opacity: 1; }
 
   /* 表单 / 弹窗等浅色表面在夜间改为深色（避开顶部栏，其保持深色） */
   html[data-theme="dark"] .field label { color: var(--text); }
@@ -595,9 +611,9 @@
 </head>
 <body>
   <div class="ptr" id="ptr"><span class="ptr-ico"></span><span class="ptr-txt">下拉刷新</span></div>
+  <button class="theme-fab" id="theme-toggle" type="button" title="切换日间 / 夜间模式" aria-label="切换日间 / 夜间模式">🌙</button>
   <div class="page" id="page">
   <div class="topbar">
-   <button class="theme-toggle" id="theme-toggle" type="button" title="切换日间 / 夜间模式">夜间</button>
    <div class="topbar-inner">
     <h1>个人投注记录</h1>
     <div class="sub" id="view-sub">全部记录</div>
@@ -750,19 +766,56 @@
   // ---------- 主题（日间 / 夜间）----------
   var THEME_KEY = "bet_theme";
   var themeToggle = document.getElementById("theme-toggle");
+  function setFabIcon(t) {
+    if (!themeToggle) return;
+    // 显示「将要切换到的」图标：日间→🌙（点去夜间）、夜间→☀️（点去日间）
+    themeToggle.textContent = (t === "dark") ? "☀️" : "🌙";
+  }
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
-    if (themeToggle) themeToggle.textContent = (t === "dark") ? "日间" : "夜间";
+    setFabIcon(t);
   }
   var savedTheme = "light";
   try { savedTheme = localStorage.getItem(THEME_KEY) || "light"; } catch (e) {}
   if (savedTheme !== "dark" && savedTheme !== "light") savedTheme = "light";
   applyTheme(savedTheme);
   if (themeToggle) {
-    themeToggle.addEventListener("click", function () {
+    var fabDrag = { on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 };
+    function fabPt(e) { return (e.touches && e.touches[0]) ? e.touches[0] : e; }
+    function fabDown(e) {
+      fabDrag.on = true; fabDrag.moved = false;
+      themeToggle.classList.add("dragging");
+      var p = fabPt(e);
+      fabDrag.sx = p.clientX; fabDrag.sy = p.clientY;
+      var r = themeToggle.getBoundingClientRect();
+      fabDrag.ox = r.left; fabDrag.oy = r.top;
+      themeToggle.style.right = "auto"; themeToggle.style.bottom = "auto";
+      themeToggle.style.left = fabDrag.ox + "px"; themeToggle.style.top = fabDrag.oy + "px";
+      if (e.cancelable) e.preventDefault();
+    }
+    function fabMove(e) {
+      if (!fabDrag.on) return;
+      var p = fabPt(e);
+      var dx = p.clientX - fabDrag.sx, dy = p.clientY - fabDrag.sy;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) fabDrag.moved = true;
+      var w = themeToggle.offsetWidth, h = themeToggle.offsetHeight;
+      var nx = Math.max(4, Math.min(fabDrag.ox + dx, window.innerWidth - w - 4));
+      var ny = Math.max(4, Math.min(fabDrag.oy + dy, window.innerHeight - h - 4));
+      themeToggle.style.left = nx + "px"; themeToggle.style.top = ny + "px";
+      if (e.cancelable) e.preventDefault();
+    }
+    function fabUp() { if (!fabDrag.on) return; fabDrag.on = false; themeToggle.classList.remove("dragging"); }
+    themeToggle.addEventListener("mousedown", fabDown);
+    window.addEventListener("mousemove", fabMove);
+    window.addEventListener("mouseup", fabUp);
+    themeToggle.addEventListener("touchstart", fabDown, { passive: false });
+    window.addEventListener("touchmove", fabMove, { passive: false });
+    window.addEventListener("touchend", fabUp);
+    themeToggle.addEventListener("click", function (e) {
+      if (fabDrag.moved) { e.preventDefault(); e.stopPropagation(); fabDrag.moved = false; return; }
       var next = (document.documentElement.getAttribute("data-theme") === "dark") ? "light" : "dark";
       applyTheme(next);
-      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+      try { localStorage.setItem(THEME_KEY, next); } catch (e2) {}
     });
   }
 
