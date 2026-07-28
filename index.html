@@ -372,23 +372,19 @@
   .card.collapsed .section-body { display: none; }
   .card.collapsed .section-toggle { transform: rotate(-90deg); }
 
-  /* 可排序对比表 */
-  table.cmp th.sortable { cursor: pointer; user-select: none; position: relative; transition: color .15s, background .15s; }
-  table.cmp th.sortable:hover { color: var(--brand); background: #f0f4ff; }
-  table.cmp th .arr { font-size: 10px; margin-left: 4px; opacity: .35; display: inline-block; }
-  table.cmp th.sorted { color: var(--brand); }
-  table.cmp th.sorted .arr { opacity: 1; }
+  /* 对比表 */
   table.cmp tbody tr { transition: background .15s; }
   table.cmp tbody tr:hover { background: #f7f9fe; }
 
   /* 对比分析菜单栏：与上方「计划」风格统一 */
   .cmp-bar {
     display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-    justify-content: space-between; margin-bottom: 14px;
+    justify-content: flex-end; margin-bottom: 14px;
   }
-  .cmp-bar .plan-sel { gap: 8px; }
-  .cmp-bar .c-select-trigger { font-size: 13px; padding: 9px 30px 9px 12px; min-width: 130px; }
-  .cmp-bar .mini { font-size: 13px; padding: 9px 16px; }
+  .cmp-bar .cmp-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
+  .cmp-bar .c-select-trigger { font-size: 13px; padding: 9px 30px 9px 12px; min-width: 132px; }
+  /* 导出下拉靠右对齐，避免弹层超出卡片右缘 */
+  #cmp-export-wrap .c-drop { left: auto; right: 0; }
 
   /* 列表记录入场/退场动画 */
   @keyframes recIn { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
@@ -514,7 +510,6 @@
   html[data-theme="dark"] table.cmp td { color: var(--text); }
   html[data-theme="dark"] table.cmp tr.total td { background: #243049; color: var(--text); border-top-color: var(--line); }
   html[data-theme="dark"] table.cmp tbody tr:hover { background: #232b36; }
-  html[data-theme="dark"] table.cmp th.sortable:hover { background: #243049; }
   html[data-theme="dark"] .cmp-row.total { background: linear-gradient(135deg, #1f2a44, #243049); }
   html[data-theme="dark"] .cmp-row.total .sub b { color: var(--text); }
   html[data-theme="dark"] .cmp-bar .c-select-trigger { background-color: #232b36; color: var(--text); border-color: var(--line); }
@@ -618,15 +613,15 @@
     <div class="card">
       <h2><span class="dot"></span>对比分析</h2>
       <div class="cmp-bar">
-        <div class="plan-sel">
-          <span class="plan-label">排序</span>
+        <div class="cmp-actions">
           <div class="c-select" id="cmp-sort-wrap">
-            <div class="c-select-trigger" id="cmp-sort-trigger"><span id="cmp-sort-text">净盈亏</span></div>
+            <div class="c-select-trigger" id="cmp-sort-trigger"><span id="cmp-sort-text">净盈亏（高→低）</span></div>
             <div class="c-drop" id="cmp-drop"></div>
           </div>
-        </div>
-        <div class="plan-ops">
-          <button class="mini" id="cmp-export-btn">导出对比</button>
+          <div class="c-select" id="cmp-export-wrap">
+            <div class="c-select-trigger" id="cmp-export-trigger"><span id="cmp-export-text">导出对比</span></div>
+            <div class="c-drop" id="cmp-export-drop"></div>
+          </div>
         </div>
       </div>
       <div id="compare-display">
@@ -1000,7 +995,10 @@
       var found = options.find(function (o) { return o.value === v; });
       textEl.textContent = found ? found.label : "";
       renderOpts();
-    }, setOptions: function (newOpts) { options = newOpts; renderOpts(); }, close: closeDrop, refresh: renderOpts };
+    }, setOptions: function (newOpts) { options = newOpts; renderOpts(); },
+       // 动作型下拉用：导出后把内部值重置为占位，使再次选择同一项仍能触发
+       rearm: function (label) { currentVal = "__none__"; textEl.textContent = label || textEl.textContent; renderOpts(); },
+       close: closeDrop, refresh: renderOpts };
   }
 
   // 自定义日期选择器（替代原生 <input type=date>，弹层风格与界面统一）
@@ -1069,16 +1067,17 @@
   }
   document.addEventListener("click", function () { closeAllDrops(); });
 
-  // 排序下拉选项定义
+  // 排序下拉选项定义（始终高→低，选项标注方向，避免歧义）
   var CMP_SORT_OPTS = [
-    { value: "net", label: "净盈亏" },
-    { value: "roi", label: "收益率" },
-    { value: "winRate", label: "胜率" },
-    { value: "input", label: "总投入" },
-    { value: "count", label: "笔数" }
+    { value: "net", label: "净盈亏（高→低）" },
+    { value: "roi", label: "收益率（高→低）" },
+    { value: "winRate", label: "胜率（高→低）" },
+    { value: "input", label: "总投入（高→低）" },
+    { value: "ret", label: "总返还（高→低）" },
+    { value: "count", label: "笔数（高→低）" }
   ];
 
-  var planDropCtrl, cmpDropCtrl;  // 下拉控制器（formPlanCtrl 已移除——表单不再含计划字段）
+  var planDropCtrl, cmpDropCtrl, cmpExportCtrl;  // 下拉控制器（formPlanCtrl 已移除——表单不再含计划字段）
   var datePickers = {};           // 自定义日期选择器控制器：f / m / dupN / dupO
 
   function updateViewSub() {
@@ -1139,10 +1138,7 @@
     var total = compute(records);
 
     var head = "<thead><tr>" + CMP_COLS.map(function (c) {
-      var sorted = cmpSort.key === c.key;
-      var arr = sorted ? (cmpSort.dir === "asc" ? "▲" : "▼") : "↕";
-      return '<th class="sortable' + (sorted ? " sorted" : "") + '" data-sort="' + c.key + '">' + c.label +
-        ' <span class="arr">' + arr + "</span></th>";
+      return "<th>" + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
@@ -1157,14 +1153,6 @@
         "</tr>";
     }).join("");
     box.innerHTML = head + body;
-    Array.prototype.forEach.call(box.querySelectorAll("th.sortable"), function (th) {
-      th.addEventListener("click", function () {
-        var k = th.getAttribute("data-sort");
-        if (cmpSort.key === k) cmpSort.dir = cmpSort.dir === "asc" ? "desc" : "asc";
-        else { cmpSort.key = k; cmpSort.dir = (k === "name") ? "asc" : "desc"; }
-        renderCompare();
-      });
-    });
 
     // 手机端紧凑行视图（与排序一致，合计独立成品牌色行，省空间）
     var rowHtml = rows.map(function (row) {
@@ -1180,12 +1168,24 @@
     cards.innerHTML = rowHtml || '<div class="empty">还没有计划数据</div>';
   }
 
-  // 对比分析：排序下拉（自定义组件）
+  // 对比分析：排序下拉（自定义组件，始终高→低）
   cmpDropCtrl = initCustomDrop("cmp-sort-wrap", "cmp-sort-trigger", "cmp-drop", "cmp-sort-text",
     CMP_SORT_OPTS, "net", function (val) {
       cmpSort.key = val;
       cmpSort.dir = "desc";
       renderCompare();
+    });
+
+  // 对比分析：导出下拉（多种格式）
+  cmpExportCtrl = initCustomDrop("cmp-export-wrap", "cmp-export-trigger", "cmp-export-drop", "cmp-export-text",
+    [
+      { value: "csv", label: "CSV（逗号分隔）" },
+      { value: "xls", label: "Excel 表格（.xls）" },
+      { value: "json", label: "JSON 数据" },
+      { value: "txt", label: "TXT 文本（制表符）" }
+    ], "csv", function (val) {
+      exportCompare(val);
+      cmpExportCtrl.rearm("导出对比");
     });
 
   // ---------- list ----------
@@ -1466,8 +1466,15 @@
     URL.revokeObjectURL(url);
   });
 
-  // 导出「对比分析」表为 CSV
-  document.getElementById("cmp-export-btn").addEventListener("click", function () {
+  // 导出「对比分析」表（支持多种格式）
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function exportCompare(fmt) {
     if (profiles.length === 0) { showAlert("暂无计划可导出"); return; }
     var valOf = function (row) { return cmpSort.key === "name" ? row.p.name : cmpSort.key === "roi" ? row.roi : row.s[cmpSort.key]; };
     var rows = profiles.map(function (p) {
@@ -1479,28 +1486,50 @@
       return cmpSort.dir === "asc" ? va - vb : vb - va;
     });
     var r2 = function (n) { return Math.round((n || 0) * 100) / 100; };
-    var lines = [["计划", "笔数", "总投入", "总返还", "净盈亏", "胜率", "收益率"]];
-    rows.forEach(function (row) {
-      lines.push([row.p.name, row.s.count, r2(row.s.input), r2(row.s.ret), r2(row.s.net), fmtPct(row.s.winRate), fmtPct(row.roi)]);
+    var headers = ["计划", "笔数", "总投入", "总返还", "净盈亏", "胜率", "收益率"];
+    var data = rows.map(function (row) {
+      return [row.p.name, row.s.count, r2(row.s.input), r2(row.s.ret), r2(row.s.net), fmtPct(row.s.winRate), fmtPct(row.roi)];
     });
     var total = compute(records);
     var troi = total.input > 0 ? total.net / total.input : 0;
-    lines.push(["合计", total.count, r2(total.input), r2(total.ret), r2(total.net), fmtPct(total.winRate), fmtPct(troi)]);
-    var csv = lines.map(function (row) {
-      return row.map(function (c) {
-        var s = String(c);
-        if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
-        return s;
-      }).join(",");
-    }).join("\r\n");
-    var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
+    data.push(["合计", total.count, r2(total.input), r2(total.ret), r2(total.net), fmtPct(total.winRate), fmtPct(troi)]);
     var d = new Date();
-    a.href = url; a.download = "对比分析_" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".csv";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
+    var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+    var fname = "对比分析_" + stamp;
+
+    if (fmt === "csv") {
+      var csv = [headers].concat(data).map(function (row) {
+        return row.map(function (c) {
+          var s = String(c);
+          if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+          return s;
+        }).join(",");
+      }).join("\r\n");
+      downloadBlob(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" }), fname + ".csv");
+    } else if (fmt === "xls") {
+      // HTML 表格，Excel 可直接打开
+      var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body><table border="1">';
+      html += "<tr>" + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr>";
+      html += data.map(function (row) { return "<tr>" + row.map(function (c) { return "<td>" + String(c) + "</td>"; }).join("") + "</tr>"; }).join("");
+      html += "</table></body></html>";
+      downloadBlob(new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" }), fname + ".xls");
+    } else if (fmt === "json") {
+      var obj = {
+        generatedAt: d.toISOString(),
+        sortBy: cmpSort.key,
+        plans: rows.map(function (row) {
+          return { name: row.p.name, count: row.s.count, input: r2(row.s.input), ret: r2(row.s.ret), net: r2(row.s.net), winRate: fmtPct(row.s.winRate), roi: fmtPct(row.roi) };
+        }),
+        total: { count: total.count, input: r2(total.input), ret: r2(total.ret), net: r2(total.net), winRate: fmtPct(total.winRate), roi: fmtPct(troi) }
+      };
+      downloadBlob(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json;charset=utf-8;" }), fname + ".json");
+    } else { // txt
+      var lines = [headers.join("\t")].concat(data.map(function (row) {
+        return row.map(function (c) { return String(c); }).join("\t");
+      }));
+      downloadBlob(new Blob([lines.join("\r\n")], { type: "text/plain;charset=utf-8;" }), fname + ".txt");
+    }
+  }
 
   // ---------- clear all（两段式防误触）：
   //   第 1 阶段：锁定 6 秒（此期间点击无效），按钮显示「等待 6s…」倒计时；
