@@ -812,7 +812,7 @@
   if (savedTheme !== "dark" && savedTheme !== "light") savedTheme = "light";
   applyTheme(savedTheme);
   if (themeToggle) {
-    var fabDrag = { on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 };
+    var fabDrag = { on: false, moved: false, sx: 0, sy: 0, startRight: 0, startBottom: 0 };
     function fabPt(e) { return (e.touches && e.touches[0]) ? e.touches[0] : e; }
     function fabDown(e) {
       fabDrag.on = true; fabDrag.moved = false;
@@ -820,10 +820,11 @@
       var p = fabPt(e);
       fabDrag.sx = p.clientX; fabDrag.sy = p.clientY;
       var r = themeToggle.getBoundingClientRect();
-      fabDrag.ox = r.left; fabDrag.oy = r.top;
-      themeToggle.style.right = "auto"; themeToggle.style.bottom = "auto";
-      themeToggle.style.left = fabDrag.ox + "px"; themeToggle.style.top = fabDrag.oy + "px";
-      if (e.cancelable) e.preventDefault();
+      // 全程用 right/bottom 定位，不再切 left/top，杜绝自动靠边
+      themeToggle.style.left = ""; themeToggle.style.top = "";
+      fabDrag.startRight = window.innerWidth - r.right;
+      fabDrag.startBottom = window.innerHeight - r.bottom;
+      // 不调 preventDefault —— 手机端轻点需要触发 click 来切换主题
     }
     function fabMove(e) {
       if (!fabDrag.on) return;
@@ -831,12 +832,19 @@
       var dx = p.clientX - fabDrag.sx, dy = p.clientY - fabDrag.sy;
       if (Math.abs(dx) > 4 || Math.abs(dy) > 4) fabDrag.moved = true;
       var w = themeToggle.offsetWidth, h = themeToggle.offsetHeight;
-      var nx = Math.max(4, Math.min(fabDrag.ox + dx, window.innerWidth - w - 4));
-      var ny = Math.max(4, Math.min(fabDrag.oy + dy, window.innerHeight - h - 4));
-      themeToggle.style.left = nx + "px"; themeToggle.style.top = ny + "px";
-      if (e.cancelable) e.preventDefault();
+      // 手指右移 → FAB 右移 → right 减小（离右边缘更近）
+      var nr = Math.max(4, Math.min(fabDrag.startRight - dx, window.innerWidth - w - 4));
+      var nb = Math.max(4, Math.min(fabDrag.startBottom - dy, window.innerHeight - h - 4));
+      themeToggle.style.right = nr + "px";
+      themeToggle.style.bottom = nb + "px";
+      if (e.cancelable) e.preventDefault();  // 拖拽中阻止页面滚动
     }
-    function fabUp() { if (!fabDrag.on) return; fabDrag.on = false; themeToggle.classList.remove("dragging"); }
+    function fabUp() {
+      if (!fabDrag.on) return;
+      fabDrag.on = false;
+      themeToggle.classList.remove("dragging");
+      /* FAB 精确停在 right/bottom 定位位置，不靠边 */
+    }
     themeToggle.addEventListener("mousedown", fabDown);
     window.addEventListener("mousemove", fabMove);
     window.addEventListener("mouseup", fabUp);
