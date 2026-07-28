@@ -1055,6 +1055,15 @@
     profiles = (prows || []).map(function (p) {
       return { id: p.id, name: p.name, color: p.color };
     });
+    if (profiles.length === 0) {
+      var defaultId = uid();
+      profiles.push({ id: defaultId, name: "我自己", color: PALETTE[0] });
+      // 同步默认计划到云端
+      var { error: ierr } = await supabase.from("profiles").upsert({
+        id: defaultId, user_id: user.id, name: "我自己", color: PALETTE[0]
+      });
+      if (ierr) console.warn("save default profile failed", ierr);
+    }
 
     // 加载记录
     var { data: rrows, error: rerr } = await supabase.from("records").select("*").order("created_at");
@@ -1065,6 +1074,10 @@
         event: r.event, amount: Number(r.amount), odds: Number(r.odds),
         result: r.result, bonus: Number(r.bonus)
       };
+    });
+    // 修复孤立记录：没有 profile 或 profile 不存在的，归到默认计划
+    records.forEach(function (r) {
+      if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
   }
 
