@@ -280,7 +280,7 @@
   /* 历史记录操作栏：导入 / 导出(下拉) / 清空 三个同尺寸、同风格（两字、定宽居中），适配手机 */
   .history-bar .plan-ops .mini,
   #hist-export-wrap .c-select-trigger {
-    min-width: 66px; justify-content: center; text-align: center; box-sizing: border-box;
+    min-width: 72px; justify-content: center; text-align: center; box-sizing: border-box;
   }
   #hist-export-wrap .c-select-trigger {
     /* 与 .mini 完全一致的视觉框：边框/圆角/字号/字重 */
@@ -288,7 +288,8 @@
     font-size: 13px; font-weight: 600; border-radius: 11px;
     padding: 9px 34px 9px 14px;
   }
-  #hist-export-wrap .c-drop { left: auto; right: 0; min-width: 100%; width: 100%; max-width: none; }
+  /* 导出下拉弹层：宽度贴合文字（完整显出 CSV/Excel 表格/图片），与触发器左对齐 */
+  #hist-export-wrap .c-drop { left: 0; right: auto; min-width: 100%; width: max-content; max-width: min(280px, calc(100vw - 24px)); }
   .pill { border: 1.5px solid var(--line); background:#fff; color: var(--muted); padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
   /* 选中态：仅 红/黑 上色，「全部」保持中性（不改色），仅以边框加深表示已选 */
   .pill.on { border-color: var(--brand); color: var(--text); background:#fff; }
@@ -1194,7 +1195,7 @@
         "<td>" + fmtMoney(row.s.ret) + "</td>" +
         '<td class="' + netCls + '">' + fmtMoney(row.s.net) + "</td>" +
         '<td class="' + winRateClass(row.s.winRate) + '">' + fmtPct(row.s.winRate) + "</td>" +
-        '<td class="' + netCls + '">' + fmtPct(row.roi) + roiMiniHtml(row.roi) + "</td>" +
+        '<td class="' + netCls + '">' + fmtPct(row.roi) + "</td>" +
         "</tr>";
     }).join("");
     box.innerHTML = head + body;
@@ -1703,47 +1704,53 @@
     }
   }
 
-  // ---------- clear all（两段式防误触）：
-  //   第 1 阶段：锁定 6 秒（此期间点击无效），按钮显示「等待 6s…」倒计时；
-  //   第 2 阶段：锁定结束后进入「可确认」窗口 4 秒，按钮显示「确认清空 (4s)」，
-  //   此 4 秒内点击才真正清空；超过 4 秒未点则自动复位。 ----------
+  // ---------- clear all：弹窗确认（与「删除」同样风格；需等待 6s 才能确认，期间可点左侧取消）----------
   var clearBtn = document.getElementById("clear-btn");
-  var clearPhase = 0;   // 0 空闲 / 1 锁定中(6s) / 2 可确认(4s)
-  var clearTimer = null, clearLeft = 0;
-  function clearReset() {
-    if (clearTimer) { clearInterval(clearTimer); clearTimer = null; }
-    clearPhase = 0;
-    clearBtn.textContent = "清空";
-    clearBtn.classList.remove("arming");
-  }
+  var clearModalTimer = null;
   clearBtn.addEventListener("click", function () {
     if (records.length === 0) { showAlert("已经是空的了"); return; }
-    if (clearPhase === 0) {
-      // 进入锁定阶段
-      clearPhase = 1;
-      clearLeft = 6;
-      clearBtn.classList.add("arming");
-      clearBtn.textContent = "等待 " + clearLeft + "s";
-      clearTimer = setInterval(function () {
-        clearLeft--;
-        if (clearPhase === 1 && clearLeft <= 0) {
-          // 锁定结束 → 进入可确认窗口
-          clearPhase = 2;
-          clearLeft = 4;
-          clearBtn.textContent = "确认清空 (" + clearLeft + "s)";
-        } else if (clearPhase === 2 && clearLeft <= 0) {
-          clearReset();   // 4 秒窗口超时，自动复位
-        } else {
-          clearBtn.textContent = (clearPhase === 1 ? "等待 " : "确认清空 (") + clearLeft + "s)";
-        }
-      }, 1000);
-    } else if (clearPhase === 2) {
-      // 可确认窗口内点击 → 真正清空
-      clearReset();
-      records = []; saveRecords(); renderAll();
-    }
-    // 第 1 阶段（锁定中）点击无效，不做任何处理
+    openClearConfirm();
   });
+  function openClearConfirm() {
+    if (clearModalTimer) { clearInterval(clearModalTimer); clearModalTimer = null; }
+    modalMsg.innerHTML = "⚠️ 确定要清空 <b>全部</b> 投注记录吗？<br>此操作不可恢复！<br><br>请等待 <b>6 秒</b> 后才可确认。";
+    modalActions.innerHTML = "";
+    var cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "取消";
+    cancelBtn.className = "modal-cancel";
+    cancelBtn.addEventListener("click", function () {
+      if (clearModalTimer) { clearInterval(clearModalTimer); clearModalTimer = null; }
+      closeModal();
+    });
+    var okBtn = document.createElement("button");
+    okBtn.textContent = "确认清空 (6s)";
+    okBtn.className = "modal-ok danger";
+    okBtn.disabled = true;
+    okBtn.style.opacity = ".5";
+    okBtn.style.cursor = "not-allowed";
+    okBtn.addEventListener("click", function () {
+      if (okBtn.disabled) return;            // 6 秒内点击无效
+      if (clearModalTimer) { clearInterval(clearModalTimer); clearModalTimer = null; }
+      closeModal();
+      records = []; saveRecords(); renderAll();
+    });
+    modalActions.appendChild(cancelBtn);
+    modalActions.appendChild(okBtn);
+    modalOverlay.style.display = "flex";
+    var left = 6;
+    clearModalTimer = setInterval(function () {
+      left--;
+      if (left <= 0) {
+        clearInterval(clearModalTimer); clearModalTimer = null;
+        okBtn.disabled = false;
+        okBtn.textContent = "确认清空";
+        okBtn.style.opacity = "1";
+        okBtn.style.cursor = "pointer";
+      } else {
+        okBtn.textContent = "确认清空 (" + left + "s)";
+      }
+    }, 1000);
+  }
 
   // ---------- import CSV ----------
   var importFile = document.getElementById("import-file");
