@@ -277,6 +277,19 @@
   .rec { transition: box-shadow .15s; }
   .rec:hover { box-shadow: 0 4px 14px rgba(31,39,51,.07); }
 
+  /* 日期输入框：弱化原生控件外观，与普通输入框统一 */
+  .field input[type="date"] {
+    appearance: none; -webkit-appearance: none;
+    color-scheme: normal;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a93a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>");
+    background-repeat: no-repeat; background-position: right 11px center;
+    padding-right: 36px !important;
+  }
+  .field input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0; cursor: pointer;
+    position: absolute; right: 0; width: 36px; height: 100%;
+  }
+
   /* 可编辑赔率字段：强调可交互 */
   #f-odds, #m-odds, #dupN-odds, #dupO-odds { background: #fff; }
   #f-odds:focus, #m-odds:focus, #dupN-odds:focus, #dupO-odds:focus { box-shadow: 0 0 0 3px var(--brand-soft); border-color: var(--brand); background: #fff; }
@@ -302,6 +315,7 @@
     .field label { font-size: 15px; }
     /* 16px 字号避免 iOS 聚焦时页面缩放 */
     .field input, .field select { font-size: 16px; padding: 12px; }
+    .field input[type="date"] { font-size: 15px; padding: 10px 36px 10px 12px !important; }
     .seg label { font-size: 15px; padding: 12px 0; }
     .hint { font-size: 12px; }
     .plan-bar { gap: 10px; }
@@ -821,7 +835,6 @@
       return cmpSort.dir === "asc" ? va - vb : vb - va;
     });
     var total = compute(records);
-    var troi = total.input > 0 ? total.net / total.input : 0;
 
     var head = "<thead><tr>" + CMP_COLS.map(function (c) {
       var sorted = cmpSort.key === c.key;
@@ -841,11 +854,6 @@
         '<td class="' + netCls + '">' + fmtPct(row.roi) + "</td>" +
         "</tr>";
     }).join("");
-    var tcls = total.net > 0 ? "pos" : total.net < 0 ? "neg" : "";
-    body += '<tr class="total"><td>合计</td><td>' + total.count + "</td>" +
-      "<td>" + fmtMoney(total.input) + "</td><td>" + fmtMoney(total.ret) + "</td>" +
-      '<td class="' + tcls + '">' + fmtMoney(total.net) + "</td><td>" + fmtPct(total.winRate) + "</td>" +
-      '<td class="' + tcls + '">' + fmtPct(troi) + "</td></tr></tbody>";
     box.innerHTML = head + body;
     Array.prototype.forEach.call(box.querySelectorAll("th.sortable"), function (th) {
       th.addEventListener("click", function () {
@@ -867,13 +875,6 @@
         '</b> · 返还 <b>' + fmtMoney(row.s.ret) + '</b> · 胜率 <b>' + fmtPct(row.s.winRate) +
         '</b> · 收益率 <b class="' + netCls + '">' + fmtPct(row.roi) + '</b></div></div>';
     }).join("");
-    rowHtml += '<div class="cmp-row total">' +
-      '<div class="top"><span class="dot" style="background:var(--brand)"></span>' +
-      '<span class="name">合计</span>' +
-      '<span class="net ' + tcls + '">' + fmtMoney(total.net) + '</span></div>' +
-      '<div class="sub">笔数 <b>' + total.count + '</b> · 投入 <b>' + fmtMoney(total.input) +
-      '</b> · 返还 <b>' + fmtMoney(total.ret) + '</b> · 胜率 <b>' + fmtPct(total.winRate) +
-      '</b> · 收益率 <b class="' + tcls + '">' + fmtPct(troi) + '</b></div></div>';
     cards.innerHTML = rowHtml || '<div class="empty">还没有计划数据</div>';
   }
 
