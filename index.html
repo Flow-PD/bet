@@ -1707,7 +1707,8 @@
   function updatePlanButtons() {
     var isPlan = currentView !== "all" && !!getProfile(currentView);
     document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
-    document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
+    // "全部"视图下禁用删除（需先切到具体计划），单计划也允许删除（会补建默认计划）
+    document.getElementById("del-plan-btn").disabled = !isPlan;
   }
   function renderPlanSelect() {
     var opts = [{ value: "all", label: "全部" }].concat(
@@ -2029,14 +2030,26 @@
 
   // ---------- delete plan (prominent + warning) ----------
   document.getElementById("del-plan-btn").addEventListener("click", function () {
-    if (currentView === "all" || !getProfile(currentView)) return;
+    if (this.disabled) return;
+    if (currentView === "all" || !getProfile(currentView)) { showAlert("请先在顶部下拉框中选择一个计划，再点击删除"); return; }
     var p = getProfile(currentView);
-    if (profiles.length <= 1) { showAlert("至少保留一个计划"); return; }
     var cnt = records.filter(function (r) { return r.profile === p.id; }).length;
-    showConfirm("⚠️ 删除计划「" + escapeHtml(p.name) + "」\n将同时删除该计划下的 " + cnt + " 条记录，\n此操作不可恢复！", function () {
+    var isOnlyProfile = profiles.length <= 1;
+    var msg = "⚠️ 删除计划「" + escapeHtml(p.name) + "」" + (cnt > 0 ? "\n将同时删除该计划下的 " + cnt + " 条记录" : "");
+    if (isOnlyProfile) msg += "\n\n这是唯一的计划，删除后将自动创建默认「暴富计划」作为替代。";
+    msg += "\n此操作不可恢复！";
+    showConfirm(msg, function () {
       profiles = profiles.filter(function (x) { return x.id !== p.id; });
       records = records.filter(function (r) { return r.profile !== p.id; });
-      currentView = "all"; saveView();
+      // 如果删光了所有计划，自动补建默认计划
+      if (profiles.length === 0) {
+        var fallbackId = uid();
+        profiles.push({ id: fallbackId, name: "暴富计划", color: PALETTE[0] });
+        // 孤立记录归到默认计划
+        records.forEach(function (r) { r.profile = fallbackId; });
+      }
+      currentView = profiles[0] ? profiles[0].id : "all";
+      saveView();
       saveProfiles(); saveRecords(); renderAll();
     }, true);
   });
