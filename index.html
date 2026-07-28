@@ -431,6 +431,7 @@
   table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
   table.cmp th, table.cmp td { padding: 14px 12px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; line-height: 1.4; vertical-align: middle; }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+  table.cmp th.cmp-center, table.cmp td.cmp-center { text-align: center; }
   table.cmp th { color: #2f3947; font-weight: 800; font-size: 13px; white-space: nowrap; letter-spacing: .2px; background: #f4f7fc; vertical-align: middle; }
   table.cmp td { color: var(--text); font-weight: 600; vertical-align: middle; }
   table.cmp td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 99px; margin-right: 6px; vertical-align: middle; }
@@ -2352,18 +2353,18 @@
     var total = compute(records);
 
     var head = "<thead><tr>" + CMP_COLS.map(function (c) {
-      return "<th>" + c.label + "</th>";
+      return '<th class="' + (c.num ? "cmp-center" : "") + '">' + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (row) {
       var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
       return "<tr>" +
         "<td>" + escapeHtml(row.p.name) + "</td>" +
-        "<td>" + row.s.count + "</td>" +
-        "<td>" + fmtMoney(row.s.input) + "</td>" +
-        "<td>" + fmtMoney(row.s.ret) + "</td>" +
-        '<td class="' + netCls + '">' + fmtMoney(row.s.net) + "</td>" +
-        '<td class="' + winRateClass(row.s.winRate) + '">' + fmtPct(row.s.winRate) + "</td>" +
-        '<td class="' + netCls + '">' + fmtPct(row.roi) + "</td>" +
+        '<td class="cmp-center">' + row.s.count + "</td>" +
+        '<td class="cmp-center">' + fmtMoney(row.s.input) + "</td>" +
+        '<td class="cmp-center">' + fmtMoney(row.s.ret) + "</td>" +
+        '<td class="' + netCls + ' cmp-center">' + fmtMoney(row.s.net) + "</td>" +
+        '<td class="' + winRateClass(row.s.winRate) + ' cmp-center">' + fmtPct(row.s.winRate) + "</td>" +
+        '<td class="' + netCls + ' cmp-center">' + fmtPct(row.roi) + "</td>" +
         "</tr>";
     }).join("");
     box.innerHTML = head + body;
