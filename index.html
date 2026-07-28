@@ -79,7 +79,7 @@
   .topbar h1 { margin: 0 0 4px; font-size: 23px; font-weight: 800; letter-spacing: .6px; text-align: center; color: var(--topbar-fg); }
   .topbar .sub { font-size: 12.5px; color: var(--topbar-fg); opacity: .68; margin-bottom: 14px; text-align: center; letter-spacing: .3px; }
   .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  @media (min-width: 560px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 560px) { .stats { grid-template-columns: repeat(3, 1fr); } }
   .stat { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 12px; box-shadow: 0 1px 3px rgba(31,39,51,.05); }
   .stat .label { font-size: 12.5px; color: var(--topbar-fg); opacity: .66; margin-bottom: 6px; font-weight: 600; letter-spacing: .3px; }
   .stat .value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
@@ -256,7 +256,7 @@
     background: var(--panel-bg); border: 1px solid var(--panel-border);
     border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(31,39,51,.05);
   }
-  .tb-plan .plan-sel { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .tb-plan .plan-sel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .tb-plan-label { font-size: 13px; color: var(--topbar-fg); font-weight: 700; letter-spacing: .2px; opacity: .85; }
   .tb-mini {
     border: 1px solid var(--panel-border); background: rgba(255,255,255,.7); color: var(--topbar-fg);
@@ -574,19 +574,20 @@
     <div class="sub" id="view-sub">全部记录</div>
     <div class="tb-plan">
       <div class="plan-sel">
-        <span class="tb-plan-label">计划</span>
+        <button class="tb-mini" id="add-plan-btn">＋ 新建计划</button>
         <div class="c-select" id="plan-select-wrap">
           <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">全部</span></div>
           <div class="c-drop" id="plan-drop"></div>
         </div>
-        <button class="tb-mini" id="rename-plan-btn" title="修改计划名称">✎ 改名</button>
+        <button class="tb-mini" id="rename-plan-btn" title="自定义计划名称">✎ 自定义</button>
         <button class="tb-mini del-plan" id="del-plan-btn" title="删除当前计划">✕ 删除</button>
-        <button class="tb-mini" id="add-plan-btn">＋ 新建</button>
       </div>
     </div>
     <div class="stats">
       <div class="stat"><div class="label">总投入</div><div class="value" id="s-input">¥0</div></div>
       <div class="stat"><div class="label">总返还</div><div class="value" id="s-return">¥0</div></div>
+      <div class="stat"><div class="label">连红</div><div class="value" id="s-streak-red">0</div></div>
+      <div class="stat"><div class="label">连黑</div><div class="value" id="s-streak-black">0</div></div>
       <div class="stat"><div class="label">净盈亏</div><div class="value" id="s-net">¥0</div></div>
       <div class="stat"><div class="label">胜率</div><div class="value" id="s-win">0%</div></div>
     </div>
@@ -980,6 +981,33 @@
     rs.forEach(function (r) { input += parseFloat(r.amount) || 0; ret += parseFloat(r.bonus) || 0; if (r.result === "红") win++; });
     return { input: input, ret: ret, net: ret - input, win: win, count: rs.length, winRate: rs.length ? win / rs.length : 0 };
   }
+  // 连红 / 连黑：以最新一条记录为终点，向前统计连续同结果（红/黑）的条数
+  function computeStreaks(recs) {
+    var sorted = recs.slice().sort(function (a, b) {
+      if (a.date < b.date) return -1;
+      if (a.date > b.date) return 1;
+      return 0;
+    });
+    var red = 0, black = 0;
+    if (sorted.length) {
+      var last = sorted[sorted.length - 1].result;
+      for (var i = sorted.length - 1; i >= 0; i--) {
+        if (sorted[i].result === last) { if (last === "红") red++; else black++; }
+        else break;
+      }
+    }
+    return { red: red, black: black };
+  }
+  // 数字转中文（1-99），用于「三连红」这类展示
+  function cnNum(n) {
+    if (n <= 0) return "0";
+    var d = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+    if (n <= 10) return d[n];
+    if (n < 20) return "十" + d[n - 10];
+    if (n < 100) { var t = Math.floor(n / 10), o = n % 10; return d[t] + "十" + (o ? d[o] : ""); }
+    return String(n);
+  }
+
   function renderStats() {
     var rs = currentView === "all" ? records : records.filter(function (r) { return r.profile === currentView; });
     var s = compute(rs);
@@ -996,6 +1024,14 @@
     roiTxt.textContent = fmtPct(roi);
     roiTxt.style.color = roi > 0 ? "var(--red)" : roi < 0 ? "var(--green)" : "var(--topbar-fg)";
     document.getElementById("win-bar").setAttribute("style", roiFillStyle(roi));
+    // 连红 / 连黑（当前连续红/黑条数，按日期升序以最新一条为终点）
+    var st = computeStreaks(rs);
+    var sRed = document.getElementById("s-streak-red");
+    var sBlack = document.getElementById("s-streak-black");
+    sRed.textContent = cnNum(st.red);
+    sBlack.textContent = cnNum(st.black);
+    sRed.style.color = st.red >= 1 ? "var(--red)" : "";
+    sBlack.style.color = st.black >= 1 ? "var(--black)" : "";
   }
 
   // ---------- plan UI ----------
