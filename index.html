@@ -863,7 +863,36 @@
   // ========== Supabase 云端存储 ==========
   var SUPABASE_URL = "https://upmxiggfbljcapjbbyqp.supabase.co";
   var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwbXhpZ2dmYmxqY2FwamJieXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDI0MDcsImV4cCI6MjEwMDgxODQwN30.Iyy7Ad5PhodN1_PpFTr4kd_5UZk1xxEduKCOya4jA5E";
-  var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var supabase = null;
+  var supabaseReady = false;
+  function initSupabase() {
+    if (typeof window.supabase === "undefined" || !window.supabase.createClient) {
+      console.warn("Supabase SDK 未加载 (CDN可能被墙)，将尝试备用方式...");
+      return false;
+    }
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
+      });
+      supabaseReady = true;
+      return true;
+    } catch (e) {
+      console.warn("Supabase 初始化失败:", e);
+      return false;
+    }
+  }
+  initSupabase();
+
+  // 备用：Supabase SDK 未加载时，用原生 fetch 直接调用 REST API
+  function sbFetch(path, opts) {
+    opts = opts || {};
+    var headers = opts.headers || {};
+    headers["apikey"] = SUPABASE_KEY;
+    headers["Content-Type"] = headers["Content-Type"] || "application/json";
+    if (sbToken) headers["Authorization"] = "Bearer " + sbToken;
+    return fetch(SUPABASE_URL + path, { method: opts.method || "GET", headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  }
+  var sbToken = localStorage.getItem("sb_access_token") || "";
   var cloudReady = false;
 
   // ========== 认证 ==========
@@ -906,29 +935,48 @@
     btn.textContent = authMode === "login" ? "登录中..." : "注册中...";
     errEl.textContent = "";
 
-    var result;
-    if (authMode === "signup") {
-      result = await supabase.auth.signUp({ email: email, password: pass });
-      if (result.error) {
-        errEl.textContent = "注册失败：" + result.error.message;
+    // SDK 没加载成功（CDN 被墙），尝试重新初始化
+    if (!supabaseReady || !supabase) {
+      initSupabase();
+      if (!supabaseReady || !supabase) {
+        errEl.textContent = "网络连接异常：Supabase SDK 加载失败。请刷新页面重试，或检查网络/VPN。";
         btn.disabled = false;
-        btn.textContent = "注册";
+        btn.textContent = authMode === "login" ? "登录" : "注册";
         return;
       }
-      if (result.data.user && !result.data.session) {
-        errEl.textContent = "注册成功！请检查邮箱确认链接，或关闭邮箱验证后再试。";
-        btn.disabled = false;
-        btn.textContent = "注册";
-        return;
-      }
-    } else {
-      result = await supabase.auth.signInWithPassword({ email: email, password: pass });
     }
 
-    if (result.error) {
-      errEl.textContent = (authMode === "login" ? "登录" : "注册") + "失败：" + result.error.message;
+    var result;
+    try {
+      if (authMode === "signup") {
+        result = await supabase.auth.signUp({ email: email, password: pass });
+      } else {
+        result = await supabase.auth.signInWithPassword({ email: email, password: pass });
+      }
+    } catch (e) {
+      var msg = (e && e.message) ? e.message : String(e);
+      if (msg.indexOf("fetch") !== -1 || msg.indexOf("network") !== -1 || msg.indexOf("Failed") !== -1) {
+        msg = "网络连接失败，无法连接到 Supabase 服务器。请检查网络/VPN，或稍后再试。";
+      }
+      errEl.textContent = (authMode === "login" ? "登录" : "注册") + "失败：" + msg;
       btn.disabled = false;
       btn.textContent = authMode === "login" ? "登录" : "注册";
+      return;
+    }
+
+    if (!result || result.error) {
+      var errMsg = (result && result.error && result.error.message) ? result.error.message : "未知错误";
+      errEl.textContent = (authMode === "login" ? "登录" : "注册") + "失败：" + errMsg;
+      btn.disabled = false;
+      btn.textContent = authMode === "login" ? "登录" : "注册";
+      return;
+    }
+
+    // 注册成功但未收到 session（需要邮箱确认）
+    if (authMode === "signup" && result.data && result.data.user && !result.data.session) {
+      errEl.textContent = "注册成功！请检查邮箱确认链接，或关闭邮箱验证后再试。";
+      btn.disabled = false;
+      btn.textContent = "注册";
       return;
     }
 
