@@ -152,17 +152,33 @@
   .toolbar .right { display:flex; gap:8px; flex-wrap: wrap; }
   .mini.danger:hover { border-color: var(--red); color: var(--red); }
 
-  /* Compare table */
-  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+  /* Compare section */
+  .cmp-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
   table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
-  table.cmp th, table.cmp td { padding: 14px 11px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; line-height: 1.4; vertical-align: middle; }
+  table.cmp th, table.cmp td { padding: 14px 12px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; line-height: 1.4; vertical-align: middle; }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
-  table.cmp th { color: var(--muted); font-weight: 700; font-size: 13px; white-space: nowrap; letter-spacing: .2px; background: #fafbfc; vertical-align: middle; }
-  table.cmp td { color: var(--text); font-weight: 500; vertical-align: middle; }
+  table.cmp th { color: #2f3947; font-weight: 800; font-size: 13px; white-space: nowrap; letter-spacing: .2px; background: #f4f7fc; vertical-align: middle; }
+  table.cmp td { color: var(--text); font-weight: 600; vertical-align: middle; }
   table.cmp td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 99px; margin-right: 6px; vertical-align: middle; }
-  table.cmp tr.total td { font-weight: 800; border-top: 2px solid var(--line); background: #f7f9fe; }
-  table.cmp tr.total td:first-child { color: var(--text); }
+  table.cmp tr.total td { font-weight: 800; border-top: 2px solid #c4d0e6; background: #eaf0ff; color: #16204a; }
+  table.cmp tr.total td:first-child { color: #16204a; }
   .pos { color: var(--red); } .neg { color: var(--green); }   /* 盈利=红 亏=绿（中国习惯） */
+
+  /* Compare mobile cards（手机端替代宽表，免横向滚动） */
+  .cmp-cards { display: none; flex-direction: column; gap: 12px; }
+  .cmp-card { border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; box-shadow: 0 2px 8px rgba(31,39,51,.05); }
+  .cmp-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .cmp-card-head .dot { width: 10px; height: 10px; border-radius: 99px; flex: 0 0 auto; }
+  .cmp-card-head .name { font-weight: 800; font-size: 15px; color: var(--text); word-break: break-word; }
+  .cmp-card-head .net { margin-left: auto; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cmp-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 14px; }
+  .cmp-card-grid > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .cmp-card-grid .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .cmp-card-grid .v { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; word-break: break-word; }
+  /* 合计：独立品牌色卡片，明显区分 */
+  .cmp-card.total { margin-top: 4px; border-color: var(--brand); background: linear-gradient(135deg, #eaf0ff, #f4f8ff); box-shadow: 0 6px 18px rgba(59,110,245,.14); }
+  .cmp-card.total .name { color: var(--brand); }
+  .cmp-card.total .cmp-card-grid .v { color: #14224f; }
 
   /* List */
   .list { display: flex; flex-direction: column; gap: 10px; }
@@ -266,6 +282,39 @@
   /* 可编辑赔率字段：强调可交互 */
   #f-odds, #m-odds, #dupN-odds, #dupO-odds { background: #fff; }
   #f-odds:focus, #m-odds:focus, #dupN-odds:focus, #dupO-odds:focus { box-shadow: 0 0 0 3px var(--brand-soft); border-color: var(--brand); background: #fff; }
+
+  /* 自定义下拉：窄屏不超过视口，避免贴边 */
+  .c-drop { max-width: min(280px, calc(100vw - 32px)); }
+
+  /* ---------- 手机端适配 ---------- */
+  @media (max-width: 640px) {
+    .cmp-table-wrap { display: none; }
+    .cmp-cards { display: flex; }
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 12px; padding-bottom: 32px; }
+    .topbar { margin-top: 12px; border-radius: 14px; }
+    .topbar-inner { padding: 14px; }
+    .topbar h1 { font-size: 20px; }
+    .stat .value { font-size: 19px; }
+    .stat .label { font-size: 11.5px; }
+    #win-pct-txt { font-size: 15px; }
+    .card { padding: 14px; margin-top: 14px; border-radius: 14px; }
+    .card h2 { font-size: 16px; }
+    .field label { font-size: 15px; }
+    /* 16px 字号避免 iOS 聚焦时页面缩放 */
+    .field input, .field select { font-size: 16px; padding: 12px; }
+    .seg label { font-size: 15px; padding: 12px 0; }
+    .hint { font-size: 12px; }
+    .plan-bar { gap: 10px; }
+    .plan-sel { gap: 8px; }
+    .plan-label { font-size: 13px; }
+    .cmp-card-grid { grid-template-columns: repeat(2, 1fr); }
+    .rec .meta { gap: 6px 14px; font-size: 12.5px; }
+    .rec .event { font-size: 14px; }
+    .modal-card { padding: 18px; }
+    .modal-msg { font-size: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -368,7 +417,10 @@
           <button class="mini" id="cmp-export-btn">导出对比</button>
         </div>
       </div>
-      <div class="table-wrap"><table class="cmp" id="compare-table"></table></div>
+      <div id="compare-display">
+        <div class="cmp-table-wrap"><table class="cmp" id="compare-table"></table></div>
+        <div class="cmp-cards" id="compare-cards"></div>
+      </div>
     </div>
 
     <!-- List -->
@@ -698,7 +750,7 @@
       var found = options.find(function (o) { return o.value === v; });
       textEl.textContent = found ? found.label : "";
       renderOpts();
-    }, close: closeDrop, refresh: renderOpts };
+    }, setOptions: function (newOpts) { options = newOpts; renderOpts(); }, close: closeDrop, refresh: renderOpts };
   }
 
   // 关闭所有自定义下拉
@@ -718,6 +770,11 @@
 
   var planDropCtrl, cmpDropCtrl;  // 下拉控制器
 
+  function updateViewSub() {
+    var p = getProfile(currentView);
+    document.getElementById("view-sub").textContent = currentView === "all"
+      ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
+  }
   function renderPlanSelect() {
     var opts = [{ value: "all", label: "全部" }].concat(
       profiles.map(function (p) { return { value: p.id, label: p.name }; })
@@ -727,15 +784,14 @@
       planDropCtrl = initCustomDrop("plan-select-wrap", "plan-select-trigger", "plan-drop", "plan-select-text",
         opts, target, function (val) {
           currentView = val;
-          var p = getProfile(currentView);
-          document.getElementById("view-sub").textContent = currentView === "all"
-            ? "全部记录 · 列表按计划分组" : ("计划：" + (p ? p.name : ""));
+          updateViewSub();
           renderPlans(); renderStats(); renderList();
         });
     } else {
+      planDropCtrl.setOptions(opts);   // 关键：改名/新建/删除后即时刷新备选项
       planDropCtrl.setValue(target);
-      planDropCtrl.refresh();
     }
+    updateViewSub();
     var isPlan = currentView !== "all" && !!getProfile(currentView);
     document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
     document.getElementById("del-plan-btn").disabled = !isPlan || profiles.length <= 1;
@@ -755,6 +811,7 @@
   ];
   function renderCompare() {
     var box = document.getElementById("compare-table");
+    var cards = document.getElementById("compare-cards");
     var rows = profiles.map(function (p) {
       var s = compute(records.filter(function (r) { return r.profile === p.id; }));
       return { p: p, s: s, roi: s.input > 0 ? s.net / s.input : 0 };
@@ -800,6 +857,37 @@
         renderCompare();
       });
     });
+
+    // 手机端卡片视图（与排序一致，合计独立成品牌色卡片）
+    var cardHtml = rows.map(function (row) {
+      var netCls = row.s.net > 0 ? "pos" : row.s.net < 0 ? "neg" : "";
+      return '<div class="cmp-card">' +
+        '<div class="cmp-card-head"><span class="dot" style="background:' + row.p.color + '"></span>' +
+        '<span class="name">' + escapeHtml(row.p.name) + '</span>' +
+        '<span class="net ' + netCls + '">' + fmtMoney(row.s.net) + '</span></div>' +
+        '<div class="cmp-card-grid">' +
+          cardItem("笔数", row.s.count) +
+          cardItem("总投入", fmtMoney(row.s.input)) +
+          cardItem("总返还", fmtMoney(row.s.ret)) +
+          cardItem("胜率", fmtPct(row.s.winRate)) +
+          cardItem("收益率", fmtPct(row.roi), netCls) +
+        '</div></div>';
+    }).join("");
+    cardHtml += '<div class="cmp-card total">' +
+      '<div class="cmp-card-head"><span class="dot" style="background:var(--brand)"></span>' +
+      '<span class="name">合计（全部计划）</span>' +
+      '<span class="net ' + tcls + '">' + fmtMoney(total.net) + '</span></div>' +
+      '<div class="cmp-card-grid">' +
+        cardItem("笔数", total.count) +
+        cardItem("总投入", fmtMoney(total.input)) +
+        cardItem("总返还", fmtMoney(total.ret)) +
+        cardItem("胜率", fmtPct(total.winRate)) +
+        cardItem("收益率", fmtPct(troi), tcls) +
+      '</div></div>';
+    cards.innerHTML = cardHtml || '<div class="empty">还没有计划数据</div>';
+  }
+  function cardItem(k, v, cls) {
+    return '<div><span class="k">' + k + '</span><span class="v' + (cls ? " " + cls : "") + '">' + v + "</span></div>";
   }
 
   // 对比分析：排序下拉（自定义组件）
