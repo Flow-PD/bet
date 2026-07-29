@@ -1174,6 +1174,7 @@
   }
   var sbToken = localStorage.getItem("sb_access_token") || "";
   var cloudReady = false;
+  var guestMode = false;  // true=游客（仅本机数据，独立命名空间）；false=已登录账号（云端 + 账号命名空间）
 
   // ========== 认证 ==========
   var authMode = "login"; // "login" | "signup"
@@ -1360,6 +1361,7 @@
 
   // 游客登录：仅使用本机浏览器数据，不连接云端
   function enterGuest() {
+    guestMode = true;
     loadFromLocal();
     cloudReady = false;
     showAppUI();
@@ -1386,13 +1388,14 @@
   document.getElementById("logout-btn").addEventListener("click", async function () {
     await supabase.auth.signOut();
     try { localStorage.removeItem("bet_saved_pass"); } catch (e) {}  // 登出时清除记住的密码
+    guestMode = false;
     showAuthUI();
     setSyncDot("off");
   });
 
   document.getElementById("migrate-btn").addEventListener("click", async function () {
     var hasLocal = false;
-    try { hasLocal = !!localStorage.getItem(RKEY); } catch (e) {}
+    try { hasLocal = !!localStorage.getItem(recKey()); } catch (e) {}
     if (!hasLocal) { alert("没有本地数据可导入"); return; }
     if (!confirm("将本机浏览器中的 " + records.length + " 条记录和 " + profiles.length + " 个计划导入到云端？\n（成功后可清空本地数据）")) return;
     await cloudSyncProfiles();
@@ -1402,6 +1405,7 @@
 
   async function onSignedIn() {
     showAppUI();
+    guestMode = false;
     var gres = await supabase.auth.getUser();
     var user = gres.data.user;
     if (!user) { showAuthUI(); return; }
@@ -1410,10 +1414,10 @@
     // 跨设备同步：把云端保存的头像 / 昵称拉回本机（解决换电脑后头像变回默认狮子）
     var umeta = (user && user.user_metadata) || {};
     if (umeta.avatar && umeta.avatar.e && umeta.avatar.bg) {
-      try { localStorage.setItem(AVATAR_KEY, JSON.stringify(umeta.avatar)); } catch (e) {}
+      try { localStorage.setItem(avatarKey(), JSON.stringify(umeta.avatar)); } catch (e) {}
     }
     if (umeta.nickname) {
-      try { localStorage.setItem(NICKNAME_KEY, umeta.nickname); } catch (e) {}
+      try { localStorage.setItem(nicknameKey(), umeta.nickname); } catch (e) {}
     }
     applyAvatar();
 
@@ -1433,7 +1437,7 @@
 
     // 检查是否有本地数据待导入
     try {
-      var localRecords = JSON.parse(localStorage.getItem(RKEY) || "[]");
+      var localRecords = JSON.parse(localStorage.getItem(recKey()) || "[]");
       if (localRecords.length > 0 && records.length === 0) {
         document.getElementById("migrate-btn").style.display = "";
       }
@@ -1488,15 +1492,15 @@
     });
     // 恢复上次选中的计划（默认进第一个计划，而非"全部"；永不自动选"全部"）
     try {
-      var sv = localStorage.getItem(VIEW_KEY);
+      var sv = localStorage.getItem(viewKey());
       if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
       else if (profiles[0]) currentView = profiles[0].id;
     } catch (e) {}
   }
 
   function loadFromLocal() {
-    try { profiles = JSON.parse(localStorage.getItem(PKEY)) || []; } catch (e) { profiles = []; }
-    try { records = JSON.parse(localStorage.getItem(RKEY)) || []; } catch (e) { records = []; }
+    try { profiles = JSON.parse(localStorage.getItem(profKey())) || []; } catch (e) { profiles = []; }
+    try { records = JSON.parse(localStorage.getItem(recKey())) || []; } catch (e) { records = []; }
     if (!Array.isArray(profiles)) profiles = [];
     if (!Array.isArray(records)) records = [];
     if (profiles.length === 0) { profiles.push({ id: uid(), name: "暴富计划", color: PALETTE[0] }); saveProfiles(); }
@@ -1504,14 +1508,14 @@
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
     try {
-      var sv = localStorage.getItem(VIEW_KEY);
+      var sv = localStorage.getItem(viewKey());
       if (sv && profiles.some(function (p) { return p.id === sv; })) currentView = sv;
       else if (profiles[0]) currentView = profiles[0].id;  // 默认进第一个计划，永不自动选"全部"
     } catch (e) {}
   }
 
   async function cloudSyncProfiles() {
-    if (!cloudReady) return;
+    if (!cloudReady || guestMode) return;
     try {
       var user = (await supabase.auth.getUser()).data.user;
       if (!user) return;
@@ -1531,7 +1535,7 @@
   }
 
   async function cloudSyncRecords() {
-    if (!cloudReady) return;
+    if (!cloudReady || guestMode) return;
     try {
       var user = (await supabase.auth.getUser()).data.user;
       if (!user) return;
@@ -1621,10 +1625,11 @@
     });
   }
 
-  var PKEY = "bet_profiles_v2";
-  var RKEY = "bet_records_v2";
-  var VIEW_KEY = "bet_view_v1";
-  function saveView() { try { localStorage.setItem(VIEW_KEY, currentView); } catch (e) {} }
+  // 账号 / 游客 双命名空间，避免彼此数据串味（隔离）
+  function profKey() { return guestMode ? "bet_guest_profiles_v2" : "bet_profiles_v2"; }
+  function recKey() { return guestMode ? "bet_guest_records_v2" : "bet_records_v2"; }
+  function viewKey() { return guestMode ? "bet_guest_view_v1" : "bet_view_v1"; }
+  function saveView() { try { localStorage.setItem(viewKey(), currentView); } catch (e) {} }
   var PALETTE = ["#3b6ef5", "#e83b3b", "#1ba672", "#f5a623", "#8b5cf6", "#ec4899", "#06b6d4", "#64748b"];
   var profiles = [];
   var records = [];
@@ -1640,11 +1645,11 @@
     renderAll();
   }
   function saveProfiles() {
-    try { localStorage.setItem(PKEY, JSON.stringify(profiles)); } catch (e) {}
+    try { localStorage.setItem(profKey(), JSON.stringify(profiles)); } catch (e) {}
     cloudSyncProfiles().catch(function (e) { console.warn("云同步计划失败", e); });
   }
   function saveRecords() {
-    try { localStorage.setItem(RKEY, JSON.stringify(records)); } catch (e) {}
+    try { localStorage.setItem(recKey(), JSON.stringify(records)); } catch (e) {}
     cloudSyncRecords().catch(function (e) { console.warn("云同步记录失败", e); });
   }
 
@@ -2084,10 +2089,10 @@
     { e: "🐧", bg: "#3b6ef5" }, { e: "🐸", bg: "#22c55e" }, { e: "🐙", bg: "#8b5cf6" }, { e: "🦄", bg: "#ec4899" },
     { e: "🐺", bg: "#475569" }, { e: "🐝", bg: "#eab308" }, { e: "🚀", bg: "#6366f1" }, { e: "⚽", bg: "#14b8a6" }
   ];
-  var AVATAR_KEY = "bet_avatar";
+  function avatarKey() { return guestMode ? "bet_guest_avatar" : "bet_avatar"; }
   function getSavedAvatar() {
     try {
-      var a = JSON.parse(localStorage.getItem(AVATAR_KEY));
+      var a = JSON.parse(localStorage.getItem(avatarKey()));
       if (a && a.e && a.bg) return a;
     } catch (e) {}
     return PRESET_AVATARS[0]; // 默认第一只 🦁
@@ -2100,7 +2105,7 @@
     if (btn) btn.style.background = a.bg;
   }
   function saveAvatar(a) {
-    try { localStorage.setItem(AVATAR_KEY, JSON.stringify(a)); } catch (e) {}
+    try { localStorage.setItem(avatarKey(), JSON.stringify(a)); } catch (e) {}
     applyAvatar();
     if (!document.getElementById("profile-page").classList.contains("hidden")) renderProfilePage();
     updateCloudMeta({ avatar: a });
@@ -2145,12 +2150,12 @@
   });
 
   // ---------- 账号主页（哔哩哔哩风格） ----------
-  var NICKNAME_KEY = "bet_nickname";
+  function nicknameKey() { return guestMode ? "bet_guest_nickname" : "bet_nickname"; }
   function getNickname() {
-    try { return localStorage.getItem(NICKNAME_KEY) || ""; } catch (e) { return ""; }
+    try { return localStorage.getItem(nicknameKey()) || ""; } catch (e) { return ""; }
   }
   function saveNickname(name) {
-    try { localStorage.setItem(NICKNAME_KEY, name); } catch (e) {}
+    try { localStorage.setItem(nicknameKey(), name); } catch (e) {}
     updateCloudMeta({ nickname: name });
   }
   function showProfilePage() {
@@ -3216,6 +3221,7 @@
       await onSignedIn();
     } else {
       showAuthUI();
+      guestMode = true;   // 未登录 = 游客命名空间，避免读到上次账号的本地缓存
       // 未登录时从本地加载以保持离线可用
       loadFromLocal();
     }
