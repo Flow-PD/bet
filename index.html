@@ -298,6 +298,31 @@
   .c-date-day:hover { background: var(--brand-soft); }
   .c-date-day.today { color: var(--brand); font-weight: 700; }
   .c-date-day.sel { background: var(--brand); color: #fff; font-weight: 700; }
+  /* 日期选择器内的时间行：自绘 HH:MM 选择器，复用下拉控件同款描边/圆角/卡片，保持画风一致 */
+  .c-date-time { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .c-date-time-label { font-size: 13px; font-weight: 600; color: var(--muted); flex: 0 0 auto; }
+  .c-time { position: relative; display: flex; align-items: center; gap: 8px; }
+  .c-time-seg {
+    min-width: 56px; text-align: center; cursor: pointer; user-select: none; outline: none;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 9px 10px; font-size: 15px; font-weight: 700;
+    color: var(--text); background-color: #fafbfc; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+  }
+  .c-time-seg:hover { border-color: #c0cad8; background-color: #fff; }
+  .c-time-seg.active, .c-time-seg:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background-color: #fff; }
+  .c-time-colon { font-size: 16px; font-weight: 700; color: var(--muted); }
+  .c-time-pop {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+    width: 84px; max-height: 196px; overflow-y: auto;
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(31,39,51,.14), 0 2px 8px rgba(31,39,51,.06);
+    padding: 6px; animation: dropIn .18s ease;
+  }
+  .c-time-pop.open { display: block; }
+  .c-time-opt { text-align: center; padding: 8px 0; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; color: var(--text); transition: background .12s; }
+  .c-time-opt:hover { background: var(--brand-soft); }
+  .c-time-opt.active { background: var(--brand); color: #fff; }
   /* 清空按钮的 3 秒确认态 */
   .mini.arming { background: var(--red); border-color: var(--red); color: #fff; font-weight: 700; }
   .seg { display: flex; gap: 8px; }
@@ -841,6 +866,7 @@
   html[data-theme="dark"] .dup-col {
     background-color: #232b36; color: var(--text); border-color: var(--line);
   }
+  html[data-theme="dark"] .c-time-seg { background-color: #232b36; color: var(--text); border-color: var(--line); }
   /* 聚焦 / 悬停态也保持深色，避免变白块 */
   html[data-theme="dark"] .field input:focus,
   html[data-theme="dark"] .field select:focus,
@@ -850,6 +876,9 @@
   html[data-theme="dark"] .cmp-bar .c-select.open .c-select-trigger,
   html[data-theme="dark"] .c-date-trigger:hover,
   html[data-theme="dark"] .c-date.open .c-date-trigger,
+  html[data-theme="dark"] .c-time-seg:hover,
+  html[data-theme="dark"] .c-time-seg.active,
+  html[data-theme="dark"] .c-time-seg:focus,
   html[data-theme="dark"] .mini:hover,
   html[data-theme="dark"] .modal-input:focus { background-color: #2b3441; }
 
@@ -902,6 +931,11 @@
   html[data-theme="dark"] .c-opt { color: var(--text); }
   html[data-theme="dark"] .c-opt:hover { background: #3a4453; color: #fff; }
   html[data-theme="dark"] .c-opt.active { background: var(--brand); color: #1a1f27; }
+  /* 夜间：时间选择器弹层 */
+  html[data-theme="dark"] .c-time-pop { background: #2b3441; border-color: var(--line); }
+  html[data-theme="dark"] .c-time-opt { color: var(--text); }
+  html[data-theme="dark"] .c-time-opt:hover { background: #3a4453; color: #fff; }
+  html[data-theme="dark"] .c-time-opt.active { background: var(--brand); color: #1a1f27; }
   /* 夜间：头像下拉菜单 */
   html[data-theme="dark"] .user-drop { background: #2b3441; border-color: var(--line); }
   html[data-theme="dark"] .user-drop-email { color: var(--text); border-bottom-color: var(--line); }
@@ -968,10 +1002,10 @@
        </button>
        <div class="user-drop" id="user-drop">
          <div class="user-drop-email" id="user-drop-email"></div>
-        <button class="user-drop-btn" id="profile-btn" title="查看个人主页">🏠 个人主页</button>
-        <button class="user-drop-btn avatar-change" id="avatar-change-btn" title="更换头像">🎨 更换头像</button>
+        <button class="user-drop-btn" id="profile-btn" title="查看个人主页">个人主页</button>
+        <button class="user-drop-btn avatar-change" id="avatar-change-btn" title="更换头像">更换头像</button>
          <button class="user-drop-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地数据</button>
-         <button class="user-drop-btn logout" id="logout-btn">登出</button>
+         <button class="user-drop-btn logout" id="logout-btn">退出登录</button>
        </div>
      </div>
    </div>
@@ -1021,11 +1055,11 @@
           </div>
         </div>
         <div class="field">
-          <label for="f-event">赛事名称</label>
+          <label for="f-event">方案</label>
           <input type="text" id="f-event" placeholder="例如：001 平平/平胜" required />
         </div>
         <div class="field">
-          <label for="f-amount">投注金额</label>
+          <label for="f-amount">投入</label>
           <input type="number" id="f-amount" placeholder="0" min="0" step="0.01" inputmode="decimal" required />
           <span class="hint">你下的本金，比如 100</span>
         </div>
@@ -1049,7 +1083,7 @@
         </div>
         <div class="field full">
           <div class="actions">
-            <button type="submit" class="btn btn-primary">+ 添加记录</button>
+            <button type="submit" class="btn btn-primary">添加记录</button>
           </div>
         </div>
       </form>
@@ -1874,8 +1908,8 @@
         '<h4>' + (side === "N" ? "新记录（本次添加）" : "历史记录（已存在）") + "</h4>" +
         '<div class="dup-f"><label>计划</label><select id="dup' + side + '-profile">' + optHtml + "</select></div>" +
         '<div class="dup-f"><label>日期</label><div class="c-date" id="dup' + side + '-date-wrap"><div class="c-date-trigger" id="dup' + side + '-date-trigger"><span class="ph">选择日期</span></div><div class="c-date-pop" id="dup' + side + '-date-pop"></div><input type="hidden" id="dup' + side + '-date" value="' + escapeHtml(rec.date || "") + '" /></div></div>' +
-        '<div class="dup-f"><label>赛事名称</label><input type="text" id="dup' + side + '-event" value="' + escapeHtml(rec.event || "") + '" /></div>' +
-        '<div class="dup-f"><label>投注金额</label><input type="number" id="dup' + side + '-amount" step="0.01" value="' + (rec.amount || 0) + '" /></div>' +
+        '<div class="dup-f"><label>方案</label><input type="text" id="dup' + side + '-event" value="' + escapeHtml(rec.event || "") + '" /></div>' +
+        '<div class="dup-f"><label>投入</label><input type="number" id="dup' + side + '-amount" step="0.01" value="' + (rec.amount || 0) + '" /></div>' +
         '<div class="dup-f"><label>赔率</label><input type="number" id="dup' + side + '-odds" step="0.01" value="' + (rec.odds || 0) + '" /></div>' +
         '<div class="dup-f"><label>结果</label><select id="dup' + side + '-result">' +
           '<option value="红"' + (rec.result === "红" ? " selected" : "") + ">红</option>" +
@@ -2109,15 +2143,24 @@
     var hidden = document.getElementById(hiddenId);
     if (!wrap || !trigger || !pop || !hidden) return null;
     var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
-    var viewY, viewM;
+    var viewY, viewM, timeSegH = null, timeSegM = null, timePop = null, curTime = "";
     function pad(n) { return (n < 10 ? "0" : "") + n; }
     function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-    function parseYMD(s) { if (!s || s.length < 10) return null; var p = s.split("-"); return { y: +p[0], m: +p[1], d: +p[2] }; }
+    function parseYMD(s) { if (!s || s.length < 10) return null; var p = s.slice(0, 10).split("-"); if (p.length < 3) return null; var y = +p[0], m = +p[1], d = +p[2]; if (!y || !m || !d) return null; return { y: y, m: m, d: d }; }
+    function nowHm() { var n = new Date(); return (n.getHours() < 10 ? "0" : "") + n.getHours() + ":" + (n.getMinutes() < 10 ? "0" : "") + n.getMinutes(); }
+    function extractTime(v) { if (!v || v.length <= 10) return ""; var t = v.slice(11); return (t && /^\d{1,2}:\d{2}$/.test(t)) ? t : ""; }
+    function datePart(v) { return (v && v.length >= 10) ? v.slice(0, 10) : ""; }
 
     function setDate(v, silent) {
       hidden.value = v || "";
       var p = v ? parseYMD(v) : parseYMD(todayStr());
       if (p) { viewY = p.y; viewM = p.m - 1; }
+      if (timeSegH && timeSegM) {
+        var tv = extractTime(v) || nowHm();
+        curTime = tv;
+        timeSegH.querySelector(".c-time-val").textContent = tv.slice(0, 2);
+        timeSegM.querySelector(".c-time-val").textContent = tv.slice(3, 5);
+      }
       if (v) {
         trigger.innerHTML = '<span class="val">' + v + "</span>";
         trigger.classList.add("has-val");
@@ -2143,20 +2186,66 @@
           cell.className = "c-date-day";
           cell.textContent = d;
           if (ds === todayStr()) cell.classList.add("today");
-          if (ds === hidden.value) cell.classList.add("sel");
-          cell.addEventListener("click", function (e) { e.stopPropagation(); setDate(ds); closePop(); });
+          if (ds === datePart(hidden.value)) cell.classList.add("sel");
+          cell.addEventListener("click", function (e) {
+            e.stopPropagation();
+            setDate(ds + " " + curTime); closePop();
+          });
           grid.appendChild(cell);
         })(d);
       }
     }
-    function openPop() { closeAllDrops(); wrap.classList.add("open"); renderGrid(); }
-    function closePop() { wrap.classList.remove("open"); }
+    function openPop() { closeAllDrops(); closeTimePop(); wrap.classList.add("open"); renderGrid(); }
+    function closePop() { closeTimePop(); wrap.classList.remove("open"); }
 
     trigger.addEventListener("click", function (e) { e.stopPropagation(); if (wrap.classList.contains("open")) closePop(); else openPop(); });
-    pop.innerHTML = '<div class="c-date-head"><button type="button" class="c-date-nav c-date-prev">‹</button><span class="c-date-m"></span><button type="button" class="c-date-nav c-date-next">›</button></div><div class="c-date-grid"></div>';
+    pop.innerHTML = '<div class="c-date-head"><button type="button" class="c-date-nav c-date-prev">‹</button><span class="c-date-m"></span><button type="button" class="c-date-nav c-date-next">›</button></div><div class="c-date-grid"></div><div class="c-date-time"><span class="c-date-time-label">时间</span><div class="c-time"><div class="c-time-seg" data-unit="h" tabindex="0"><span class="c-time-val">--</span></div><span class="c-time-colon">:</span><div class="c-time-seg" data-unit="m" tabindex="0"><span class="c-time-val">--</span></div><div class="c-time-pop"></div></div></div>';
+    timeSegH = pop.querySelector('.c-time-seg[data-unit="h"]');
+    timeSegM = pop.querySelector('.c-time-seg[data-unit="m"]');
+    timePop = pop.querySelector(".c-time-pop");
+
+    function closeTimePop() { if (timePop) timePop.classList.remove("open"); }
+    function applyTime() {
+      var dp = datePart(hidden.value) || todayStr();
+      hidden.value = dp + " " + curTime;
+      trigger.innerHTML = '<span class="val">' + hidden.value + "</span>";
+      trigger.classList.add("has-val");
+      if (timeSegH) timeSegH.querySelector(".c-time-val").textContent = curTime.slice(0, 2);
+      if (timeSegM) timeSegM.querySelector(".c-time-val").textContent = curTime.slice(3, 5);
+    }
+    function openTimePop(unit) {
+      closeTimePop();
+      var max = unit === "h" ? 23 : 59;
+      var cur = unit === "h" ? curTime.slice(0, 2) : curTime.slice(3, 5);
+      var html = "";
+      for (var i = 0; i <= max; i++) { var s = (i < 10 ? "0" : "") + i; html += '<div class="c-time-opt' + (s === cur ? " active" : "") + '" data-v="' + s + '">' + s + "</div>"; }
+      timePop.innerHTML = html;
+      timePop.style.left = unit === "h" ? "0" : "auto";
+      timePop.style.right = unit === "h" ? "auto" : "0";
+      timePop.classList.add("open");
+      timePop.querySelectorAll(".c-time-opt").forEach(function (opt) {
+        opt.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var v = opt.getAttribute("data-v");
+          curTime = unit === "h" ? (v + ":" + curTime.slice(3, 5)) : (curTime.slice(0, 2) + ":" + v);
+          applyTime();
+          closeTimePop();
+        });
+      });
+    }
+    function segToggle(unit) { return function (e) { e.stopPropagation(); if (timePop.classList.contains("open") && timePop.getAttribute("data-unit") === unit) closeTimePop(); else { timePop.setAttribute("data-unit", unit); openTimePop(unit); } }; }
+    timeSegH.addEventListener("click", segToggle("h"));
+    timeSegM.addEventListener("click", segToggle("m"));
+    timeSegH.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); segToggle("h")(e); } });
+    timeSegM.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); segToggle("m")(e); } });
+    document.addEventListener("click", closeTimePop);
     pop.querySelector(".c-date-prev").addEventListener("click", function (e) { e.stopPropagation(); viewM--; if (viewM < 0) { viewM = 11; viewY--; } renderGrid(); });
     pop.querySelector(".c-date-next").addEventListener("click", function (e) { e.stopPropagation(); viewM++; if (viewM > 11) { viewM = 0; viewY++; } renderGrid(); });
     setDate(initialVal || "", true);
+    // 默认自动校正为当前系统时间（精确到分钟）
+    if (!extractTime(hidden.value)) {
+      setDate((datePart(hidden.value) || todayStr()) + " " + nowHm(), true);
+    }
     return { getDate: function () { return hidden.value; }, setDate: function (v) { setDate(v, true); }, open: openPop, close: closePop };
   }
 
@@ -2616,9 +2705,9 @@
       '<select class="modal-input" id="m-profile">' + optHtml + '</select>' +
       '<div class="modal-label">日期</div>' +
       '<div class="c-date" id="m-date-wrap"><div class="c-date-trigger" id="m-date-trigger"><span class="ph">选择日期</span></div><div class="c-date-pop" id="m-date-pop"></div><input type="hidden" id="m-date" value="' + escapeHtml(r.date || "") + '" /></div>' +
-      '<div class="modal-label">赛事名称</div>' +
+      '<div class="modal-label">方案</div>' +
       '<input class="modal-input" id="m-event" value="' + escapeHtml(r.event || "") + '" />' +
-      '<div class="modal-label">投注金额</div>' +
+      '<div class="modal-label">投入</div>' +
       '<input class="modal-input" id="m-amount" type="number" min="0" step="0.01" value="' + (parseFloat(r.amount) || 0) + '" />' +
       '<div class="modal-label">赔率（可手动输入，或自动算）</div>' +
       '<input class="modal-input" id="m-odds" type="number" min="0" step="0.01" inputmode="decimal" value="' + (parseFloat(r.odds) || 0).toFixed(2) + '" />' +
@@ -2637,7 +2726,7 @@
         var ne = (document.getElementById("m-event").value || "").trim();
         var na = parseFloat(document.getElementById("m-amount").value) || 0;
         var nr = document.querySelector('input[name="m-result"]:checked').value;
-        if (!ne) { showAlert("赛事名称不能为空"); return; }
+        if (!ne) { showAlert("方案不能为空"); return; }
         var dm = deriveMoney(na, nr,
           parseFloat(document.getElementById("m-odds").value),
           parseFloat(document.getElementById("m-bonus").value));
@@ -2665,7 +2754,9 @@
   (function initAddDate() {
     var d = new Date();
     var t = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    datePickers.f = initDatePicker("f-date-wrap", "f-date-trigger", "f-date-pop", "f-date", t, null);
+    datePickers.f = initDatePicker("f-date-wrap", "f-date-trigger", "f-date-pop", "f-date", t, function () {
+      var ev = document.getElementById("f-event"); if (ev) ev.focus();
+    });
     var lbl = document.getElementById("f-date-label");
     if (lbl) lbl.addEventListener("click", function () { if (datePickers.f) datePickers.f.open(); });
   })();
@@ -2701,6 +2792,24 @@
     document.getElementById(id).addEventListener("input", function () { addRecalc(id.replace("f-", "")); });
   });
   document.getElementById("f-bonus").addEventListener("input", autoResultFromBonus);
+
+  // 自动跳到下一输入框：日期选完后聚焦赛事名称（见上方 onChange），
+  // 其余输入框输完按 Enter 即前进，无需再用鼠标点选下一个框
+  (function setupAutoAdvance() {
+    var order = ["f-event", "f-amount", "f-odds", "f-bonus"];
+    order.forEach(function (id, i) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          var nextId = order[i + 1];
+          var next = nextId ? document.getElementById(nextId) : document.querySelector('#add-form button[type="submit"]');
+          if (next) next.focus();
+        }
+      });
+    });
+  })();
 
   // 添加表单可折叠
   document.getElementById("add-toggle").addEventListener("click", function () {
@@ -2981,7 +3090,7 @@
   function exportRecords(fmt) {
     if (records.length === 0) { showAlert("暂无数据可导出"); return; }
     var r2 = function (n) { return Math.round((n || 0) * 100) / 100; };
-    var headers = ["计划", "日期", "赛事名称", "投注金额", "赔率", "结果", "奖金"];
+    var headers = ["计划", "日期", "方案", "投入", "赔率", "结果", "奖金"];
     var rows = records.map(function (r) {
       return [getProfileName(r.profile), r.date, r.event, r2(r.amount), r2(r.odds), r.result, r2(r.bonus)];
     });
@@ -3226,7 +3335,7 @@
     var keys = {
       profile: ["记录人", "账本", "profile", "name", "谁", "人", "记录者", "计划"],
       date: ["日期", "时间", "date"],
-      event: ["赛事名称", "计划", "赛事", "项目", "event", "备注", "描述"],
+      event: ["赛事名称", "计划", "赛事", "项目", "event", "备注", "描述", "方案"],
       amount: ["投注金额", "投入", "金额", "本金", "amount"],
       odds: ["赔率", "odds"],
       result: ["结果", "中否", "输赢", "红黑", "中/否", "result"],
@@ -3301,7 +3410,7 @@
         id: uid(),
         profile: pid,
         date: normImportDate(String(o.date != null ? o.date : o.日期 || "")),
-        event: (o.event != null ? o.event : o.赛事名称 != null ? o.赛事名称 : o.赛事 || "(未命名)") || "(未命名)",
+        event: (o.event != null ? o.event : o.赛事名称 != null ? o.赛事名称 : o.赛事 != null ? o.赛事 : o.方案 || "(未命名)") || "(未命名)",
         amount: amount, odds: odds, result: result, bonus: bonus
       });
     });
