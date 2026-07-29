@@ -3287,10 +3287,28 @@
   }
 
   function normImportDate(s) {
-    if (!s) return "";
-    if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(s)) return s.replace(/\//g, "-");
-    var m = s.match(/(\d{1,2})\.(\d{1,2})/);
-    if (m) return "2026-" + String(+m[1]).padStart(2, "0") + "-" + String(+m[2]).padStart(2, "0");
+    if (!s && s !== 0) return "";
+    s = String(s).trim();
+    if (s === "") return "";
+    // 纯数字：可能是 Excel 日期序列号（1900 日期系统，基准 1899-12-30）
+    if (/^\d{5}$/.test(s)) {
+      var serial = parseInt(s, 10);
+      if (serial > 20000 && serial < 80000) {
+        var d0 = new Date((serial - 25569) * 86400 * 1000);
+        if (!isNaN(d0.getTime())) return d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0") + "-" + String(d0.getDate()).padStart(2, "0");
+      }
+    }
+    // 2026-7-10 / 2026/7/10 / 2026.7.10
+    var m1 = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (m1) return m1[1] + "-" + String(+m1[2]).padStart(2, "0") + "-" + String(+m1[3]).padStart(2, "0");
+    // 2026年7月10日 / 2026年07月10日（SheetJS 导出的中文日期）
+    var m2 = s.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+    if (m2) return m2[1] + "-" + String(+m2[2]).padStart(2, "0") + "-" + String(+m2[3]).padStart(2, "0");
+    // 仅 月.日 / 月/日（缺少年份，按当前年补）
+    var m3 = s.match(/^(\d{1,2})[.\/](\d{1,2})$/);
+    if (m3) { var y3 = new Date().getFullYear(); return y3 + "-" + String(+m3[1]).padStart(2, "0") + "-" + String(+m3[2]).padStart(2, "0"); }
+    var m4 = s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+    if (m4) { var y4 = new Date().getFullYear(); return y4 + "-" + String(+m4[1]).padStart(2, "0") + "-" + String(+m4[2]).padStart(2, "0"); }
     return "";
   }
 
