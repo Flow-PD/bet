@@ -741,6 +741,7 @@
   .scheme-beta { font-size: 11px; background: rgba(255,255,255,.22); padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
   .scheme-banner-sub { font-size: 12.5px; opacity: .85; margin-top: 6px; }
   .scheme-body { max-width: 828px; margin: 0 auto; padding: 16px 16px 84px; }
+  .scheme-pending { text-align: center; color: var(--muted); font-size: 17px; font-weight: 600; letter-spacing: 1px; padding: 72px 16px; }
   .scheme-note { font-size: 13px; color: var(--muted); background: var(--brand-soft); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; line-height: 1.6; }
   .scheme-note code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; }
   .scheme-card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; }
@@ -765,8 +766,7 @@
   /* ============ 底部标签栏（微信式视图切换：投注记录 / 赛事方案） ============ */
   #tabbar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; background: var(--topbar-bg); border-top: 1px solid var(--panel-border); box-shadow: 0 -2px 12px rgba(0,0,0,.10); z-index: 600; }
   #tabbar.hidden { display: none; }
-  .tabbar-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: none; background: transparent; cursor: pointer; font-family: inherit; color: var(--muted); font-size: 11px; padding: 0; -webkit-tap-highlight-color: transparent; transition: color .15s; }
-  .tabbar-tab .ico { font-size: 22px; line-height: 1; }
+  .tabbar-tab { flex: 1; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; font-family: inherit; color: var(--muted); font-size: 14px; font-weight: 600; letter-spacing: .5px; padding: 0; -webkit-tap-highlight-color: transparent; transition: color .15s; }
   .tabbar-tab.active { color: var(--brand); }
   html[data-theme="dark"] #tabbar { background: #161c25; border-top-color: #2c3441; }
   /* 有底部标签栏时，主内容底部留白避免被遮挡；右上角主题 FAB 同步上移 */
@@ -1155,58 +1155,10 @@
   <!-- ===== 赛事方案模块（占位 / 朋友后续实现，不影响现有投注记录界面） ===== -->
   <div id="scheme-page" class="hidden">
     <div class="scheme-banner">
-      <div class="scheme-banner-title">赛事方案 <span class="scheme-beta">Beta</span></div>
-      <div class="scheme-banner-sub">比赛信息 · 赔率 · 下注倍数 · 奖金优化 · 方案保存 · 赛后自动判定</div>
+      <div class="scheme-banner-title">赛事方案</div>
     </div>
     <div class="scheme-body">
-      <div class="scheme-note">此模块由朋友后续实现，以下为占位界面与可扩展骨架。方案数据存于本机 localStorage（键 <code>bet_scheme_v1</code>），与投注记录 / 账号数据完全独立。</div>
-
-      <!-- ① 外网比赛信息 -->
-      <div class="scheme-card">
-        <h3>① 外网比赛信息</h3>
-        <div class="scheme-placeholder" id="scheme-match-area">
-          <!-- TODO(朋友): 接入外网比赛信息（赛事、队伍、时间、盘口等） -->
-          <p class="scheme-todo">TODO：在此展示 / 拉取外部比赛信息。</p>
-        </div>
-      </div>
-
-      <!-- ② 赔率 / 下注倍数 -->
-      <div class="scheme-card">
-        <h3>② 赔率 / 下注倍数</h3>
-        <div class="scheme-row">
-          <label>赔率</label><input type="text" id="scheme-odds" class="scheme-input" placeholder="例如 2.10" />
-          <label>下注倍数</label><input type="text" id="scheme-mult" class="scheme-input" placeholder="例如 3" />
-        </div>
-        <p class="scheme-todo">TODO：赔率组合、串关、倍数与本金计算。</p>
-      </div>
-
-      <!-- ③ 奖金优化 -->
-      <div class="scheme-card">
-        <h3>③ 奖金优化</h3>
-        <div class="scheme-placeholder" id="scheme-optimize-area">
-          <!-- TODO(朋友): 奖金优化算法（组合优化、回报率测算等） -->
-          <p class="scheme-todo">TODO：奖金优化算法（如组合优化、回报率测算）。</p>
-        </div>
-      </div>
-
-      <!-- ④ 保存方案（已提供可用的 localStorage 骨架） -->
-      <div class="scheme-card">
-        <h3>④ 保存方案</h3>
-        <div class="scheme-row">
-          <input type="text" id="scheme-name" class="scheme-input" placeholder="方案名称" />
-          <button class="scheme-btn" id="scheme-save-btn" type="button">保存方案</button>
-        </div>
-        <div class="scheme-list" id="scheme-list"></div>
-      </div>
-
-      <!-- ⑤ 赛后自动判定 -->
-      <div class="scheme-card">
-        <h3>⑤ 赛后自动判定是否中奖</h3>
-        <div class="scheme-placeholder" id="scheme-judge-area">
-          <!-- TODO(朋友): 录入赛果后，自动比对各方案并判定中奖 / 未中奖 -->
-          <p class="scheme-todo">TODO：赛果录入后，自动比对方案并判定中奖 / 未中奖。</p>
-        </div>
-      </div>
+      <div class="scheme-pending">待完善此功能</div>
     </div>
   </div>
 
@@ -1239,12 +1191,8 @@
 
   <!-- ===== 底部标签栏（微信式切换：投注记录 / 赛事方案） ===== -->
   <div id="tabbar" class="hidden">
-    <button class="tabbar-tab active" id="tab-main" type="button">
-      <span class="ico">📊</span><span>投注记录</span>
-    </button>
-    <button class="tabbar-tab" id="tab-scheme" type="button">
-      <span class="ico">🧩</span><span>赛事方案</span>
-    </button>
+    <button class="tabbar-tab active" id="tab-main" type="button">投注记录</button>
+    <button class="tabbar-tab" id="tab-scheme" type="button">赛事方案</button>
   </div>
 
 <script>
@@ -3330,39 +3278,9 @@
     document.addEventListener("touchcancel", onEnd, { passive: true });
   })();
 
-  // ========== 赛事方案模块（占位 / 朋友后续实现） ==========
-  // 数据存于本机 localStorage 独立键，与投注记录 / 账号数据完全隔离
-  var SCHEME_KEY = "bet_scheme_v1";
-  function loadSchemes() {
-    try { return JSON.parse(localStorage.getItem(SCHEME_KEY)) || []; } catch (e) { return []; }
-  }
-  function saveSchemes(arr) {
-    try { localStorage.setItem(SCHEME_KEY, JSON.stringify(arr)); } catch (e) {}
-  }
-  function renderSchemeList() {
-    var list = document.getElementById("scheme-list");
-    if (!list) return;
-    var arr = loadSchemes();
-    if (!arr.length) { list.innerHTML = '<div class="scheme-todo">还没有保存的方案。</div>'; return; }
-    list.innerHTML = arr.map(function (s) {
-      var meta = [];
-      if (s.odds) meta.push("赔率 " + s.odds);
-      if (s.mult) meta.push("倍数 " + s.mult);
-      meta.push(s.status || "待赛");
-      return '<div class="scheme-item" data-id="' + s.id + '">' +
-        '<div><div class="scheme-item-name">' + escapeHtml(s.name) + '</div>' +
-        '<div class="scheme-item-meta">' + meta.join(" · ") + (s.created_at ? " · " + s.created_at : "") + '</div></div>' +
-        '<button class="scheme-item-del" data-del="' + s.id + '">删除</button>' +
-      '</div>';
-    }).join("");
-    list.querySelectorAll("[data-del]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var id = b.getAttribute("data-del");
-        saveSchemes(loadSchemes().filter(function (x) { return x.id !== id; }));
-        renderSchemeList();
-      });
-    });
-  }
+  // ========== 赛事方案模块（占位，待完善） ==========
+  // 当前仅显示「待完善此功能」占位，具体功能（外网比赛信息 / 赔率 / 奖金优化 /
+  // 方案保存 / 赛后判定）由朋友后续实现。
   // ---- 底部标签栏：微信式切换 投注记录 / 赛事方案 ----
   function switchTab(tab) {
     var page = document.getElementById("page");
@@ -3373,7 +3291,6 @@
       page.classList.add("hidden");
       scheme.classList.remove("hidden");
       scheme.scrollTop = 0;
-      renderSchemeList();
       tabMain.classList.remove("active");
       tabScheme.classList.add("active");
     } else {
@@ -3387,28 +3304,6 @@
   function hideTabbar() { document.getElementById("tabbar").classList.add("hidden"); }
   document.getElementById("tab-main").addEventListener("click", function () { switchTab("main"); });
   document.getElementById("tab-scheme").addEventListener("click", function () { switchTab("scheme"); });
-  // ---- 朋友后续实现的扩展点（当前为占位） ----
-  var SchemeModule = {
-    // TODO(朋友): 接入外网比赛信息，渲染到 #scheme-match-area
-    fetchMatchInfo: function () { console.log("[SchemeModule] fetchMatchInfo 待实现"); },
-    // TODO(朋友): 奖金优化算法，渲染到 #scheme-optimize-area
-    optimizeBonus: function () { console.log("[SchemeModule] optimizeBonus 待实现"); },
-    // TODO(朋友): 赛后根据赛果判定方案是否中奖，更新方案 status
-    judgeResults: function () { console.log("[SchemeModule] judgeResults 待实现"); }
-  };
-  document.getElementById("scheme-save-btn").addEventListener("click", function () {
-    var name = (document.getElementById("scheme-name").value || "").trim();
-    if (!name) { alert("请先填写方案名称"); return; }
-    var odds = (document.getElementById("scheme-odds").value || "").trim();
-    var mult = (document.getElementById("scheme-mult").value || "").trim();
-    var arr = loadSchemes();
-    arr.unshift({ id: uid(), name: name, odds: odds, mult: mult, status: "待赛", created_at: new Date().toLocaleString("zh-CN") });
-    saveSchemes(arr);
-    document.getElementById("scheme-name").value = "";
-    document.getElementById("scheme-odds").value = "";
-    document.getElementById("scheme-mult").value = "";
-    renderSchemeList();
-  });
 
   // ---------- init ----------
   (async function initApp() {
