@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>个人投注记录</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   /* 登录 / 注册界面 */
   #auth-ui { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
@@ -3124,42 +3125,58 @@
   document.getElementById("import-btn").addEventListener("click", function () { importFile.click(); });
   importFile.addEventListener("change", function () {
     var file = this.files && this.files[0]; if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        var fname = file.name || "";
-        var ext = (fname.split(".").pop() || "").toLowerCase();
-        var imported = parseImport(e.target.result, ext);
-        if (!imported.length) { showAlert("没有解析到任何记录，请检查 CSV 格式"); return; }
-        var seen = {};
-        records.forEach(function (r) { seen[key(r)] = r; });
-        var added = 0, updated = 0;
-        imported.forEach(function (r) {
-          var k = key(r);
-          if (seen[k]) { seen[k].bonus = r.bonus; seen[k].odds = r.odds; updated++; }
-          else { records.push(r); seen[k] = r; added++; }
-        });
-        // 导入后清理「没有任何记录」的空账本，避免对比表出现空占位
-        profiles = profiles.filter(function (p) { return records.some(function (r) { return r.profile === p.id; }); });
-        if (profiles.length === 0) { profiles.push({ id: uid(), name: "Plan A", color: PALETTE[0] }); }
-        saveProfiles(); saveRecords(); renderAll();
-        showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个计划）");
-      } catch (err) { showAlert("导入失败：" + err.message); }
-      finally { importFile.value = ""; }
-    };
-    reader.readAsText(file, "UTF-8");
+    var fname = file.name || "";
+    var ext = (fname.split(".").pop() || "").toLowerCase();
+    // xlsx/xls 是二进制格式，必须用 SheetJS 解析；其余走文本解析
+    if (ext === "xlsx" || ext === "xls") {
+      var rBin = new FileReader();
+      rBin.onload = function (e2) {
+        try {
+          var wb = XLSX.read(e2.target.result, { type: "array" });
+          var ws = wb.Sheets[wb.SheetNames[0]];
+          var csvText = XLSX.utils.sheet_to_csv(ws);
+          var imported = parseDelimited(csvText);
+          finishImport(imported);
+        } catch (err) { showAlert("导入失败：" + err.message); }
+        finally { importFile.value = ""; }
+      };
+      rBin.readAsArrayBuffer(file);
+    } else {
+      var rTxt = new FileReader();
+      rTxt.onload = function (e2) {
+        try {
+          var imported = parseImport(e2.target.result, ext);
+          finishImport(imported);
+        } catch (err) { showAlert("导入失败：" + err.message); }
+        finally { importFile.value = ""; }
+      };
+      rTxt.readAsText(file, "UTF-8");
+    }
   });
+
+  function finishImport(imported) {
+    if (!imported.length) { showAlert("没有解析到任何记录，请检查文件格式"); return; }
+    var seen = {};
+    records.forEach(function (r) { seen[key(r)] = r; });
+    var added = 0, updated = 0;
+    imported.forEach(function (r) {
+      var k = key(r);
+      if (seen[k]) { seen[k].bonus = r.bonus; seen[k].odds = r.odds; updated++; }
+      else { records.push(r); seen[k] = r; added++; }
+    });
+    // 导入后清理「没有任何记录」的空账本，避免对比表出现空占位
+    profiles = profiles.filter(function (p) { return records.some(function (r) { return r.profile === p.id; }); });
+    if (profiles.length === 0) { profiles.push({ id: uid(), name: "Plan A", color: PALETTE[0] }); }
+    saveProfiles(); saveRecords(); renderAll();
+    showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个计划）");
+  }
 
   function key(r) { return [r.profile, r.date, r.event, r.amount, r.odds, r.result].join("|"); }
 
-  // 按扩展名分流导入：json 走 JSON 解析；xls/xlsx 先剥去 HTML 标签转成网格；csv/txt 走通用分隔符解析
+  // 按扩展名分流导入：json 走 JSON 解析；csv/txt 走通用分隔符解析（xls/xlsx 已在文件读取阶段由 SheetJS 处理）
   function parseImport(text, ext) {
     if (ext === "json") return parseJsonImport(text);
-    var grid = text;
-    if (ext === "xls" || ext === "xlsx") {
-      grid = text.replace(/<\/th>/gi, "\t").replace(/<\/td>/gi, "\t").replace(/<\/tr>/gi, "\n").replace(/<[^>]+>/g, "");
-    }
-    return parseDelimited(grid);
+    return parseDelimited(text);
   }
   function parseCsv(text) { return parseImport(text, "csv"); }   // 兼容旧调用
 
