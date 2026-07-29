@@ -23,6 +23,8 @@
   #auth-ui .auth-field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
   #auth-ui .auth-btn { width: 100%; padding: 12px; margin-top: 4px; border: none; border-radius: 10px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
   #auth-ui .auth-btn:hover { opacity: .9; }
+  #auth-ui .auth-guest-btn { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
+  #auth-ui .auth-guest-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
   #auth-ui .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
   #auth-ui .auth-err { color: var(--red); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
   #auth-ui .auth-checks { margin-bottom: 8px; text-align: left; }
@@ -635,7 +637,7 @@
   /* ============ 账号主页（哔哩哔哩风格） ============ */
   #profile-page { position: fixed; inset: 0; z-index: 500; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg, #f4f5f7); }
   #profile-page.hidden { display: none; }
-  .profile-banner { position: relative; height: 180px; background: linear-gradient(135deg, #fb7299 0%, #f25d8e 50%, #e54e7a 100%); overflow: hidden; flex-shrink: 0; }
+  .profile-banner { position: relative; height: 180px; background: linear-gradient(135deg, var(--brand) 0%, #3c4654 100%); overflow: hidden; flex-shrink: 0; }
   .profile-banner-deco { position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(255,255,255,.12) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(255,255,255,.08) 0%, transparent 40%); }
   .profile-back-btn { position: absolute; top: 16px; left: 16px; border: none; background: rgba(0,0,0,.25); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; backdrop-filter: blur(8px); transition: background .15s; }
   .profile-back-btn:hover { background: rgba(0,0,0,.4); }
@@ -708,6 +710,7 @@
   .profile-action-btn.danger { color: var(--red); }
   .profile-action-btn.danger:hover { background: var(--red-soft); border-color: var(--red); }
   html[data-theme="dark"] #profile-page { background: #14181f; }
+  html[data-theme="dark"] .profile-banner { background: linear-gradient(135deg, #2a3340 0%, #161c25 100%); }
   html[data-theme="dark"] .profile-avatar { border-color: var(--card); }
   html[data-theme="dark"] .profile-back-btn { background: rgba(0,0,0,.4); }
   html[data-theme="dark"] .profile-rec-tag.black { background: rgba(27,166,114,.15); }
@@ -877,6 +880,7 @@
         <label class="auth-check"><input type="checkbox" id="auth-remember-pass" /> 记住密码（下次自动登录）</label>
       </div>
       <button class="auth-btn" id="auth-submit-btn">登录</button>
+      <button class="auth-guest-btn" id="auth-guest-btn" type="button">游客登录（仅本机数据）</button>
       <div class="auth-err" id="auth-err"></div>
     </div>
   </div>
@@ -1354,6 +1358,20 @@
     await onSignedIn();
   });
 
+  // 游客登录：仅使用本机浏览器数据，不连接云端
+  function enterGuest() {
+    loadFromLocal();
+    cloudReady = false;
+    showAppUI();
+    document.getElementById("user-drop-email").textContent = "游客模式 · 数据仅存本机";
+    applyAvatar();
+    setSyncDot("off");
+    renderAll();
+  }
+  document.getElementById("auth-guest-btn").addEventListener("click", function () {
+    enterGuest();
+  });
+
   // 回车登录
   document.getElementById("auth-pass").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("auth-submit-btn").click();
@@ -1384,9 +1402,19 @@
 
   async function onSignedIn() {
     showAppUI();
-    var user = (await supabase.auth.getUser()).data.user;
+    var gres = await supabase.auth.getUser();
+    var user = gres.data.user;
     if (!user) { showAuthUI(); return; }
     document.getElementById("user-drop-email").textContent = maskEmail(user.email);
+
+    // 跨设备同步：把云端保存的头像 / 昵称拉回本机（解决换电脑后头像变回默认狮子）
+    var umeta = (user && user.user_metadata) || {};
+    if (umeta.avatar && umeta.avatar.e && umeta.avatar.bg) {
+      try { localStorage.setItem(AVATAR_KEY, JSON.stringify(umeta.avatar)); } catch (e) {}
+    }
+    if (umeta.nickname) {
+      try { localStorage.setItem(NICKNAME_KEY, umeta.nickname); } catch (e) {}
+    }
     applyAvatar();
 
     // 加载云端数据
@@ -2075,6 +2103,17 @@
     try { localStorage.setItem(AVATAR_KEY, JSON.stringify(a)); } catch (e) {}
     applyAvatar();
     if (!document.getElementById("profile-page").classList.contains("hidden")) renderProfilePage();
+    updateCloudMeta({ avatar: a });
+  }
+  // 把头像 / 昵称等用户资料同步到 Supabase 账号（user_metadata，无需新建数据表）
+  async function updateCloudMeta(patch) {
+    if (!cloudReady || !supabase) return;
+    try {
+      var res = await supabase.auth.getUser();
+      var meta = (res && res.data && res.data.user && res.data.user.user_metadata) || {};
+      meta = Object.assign({}, meta, patch);
+      await supabase.auth.updateUser({ data: meta });
+    } catch (e) { console.warn("更新云端资料失败", e); }
   }
   function renderAvatarGrid() {
     var grid = document.getElementById("avatar-grid");
@@ -2112,6 +2151,7 @@
   }
   function saveNickname(name) {
     try { localStorage.setItem(NICKNAME_KEY, name); } catch (e) {}
+    updateCloudMeta({ nickname: name });
   }
   function showProfilePage() {
     closeAllDrops();
