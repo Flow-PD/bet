@@ -528,6 +528,16 @@
   .modal-cancel { background: var(--black-soft); color: var(--text); }
   .modal-ok { background: var(--brand); color: #fff; }
   .modal-ok.danger { background: var(--red); }
+  /* 删除计划多选弹窗 + 关键提示标红居中（与「清空」同风格，无图标） */
+  .dm-center { text-align: center; line-height: 1.7; }
+  .dm-center p { margin: 4px 0; }
+  .warn-red { color: var(--red); font-weight: 700; }
+  .delplans-list { margin-top: 10px; max-height: 230px; overflow-y: auto; text-align: left; border-top: 1px solid var(--line); padding-top: 6px; }
+  .delplans-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; font-size: 14px; cursor: pointer; border-radius: 8px; }
+  .delplans-row:hover { background: var(--brand-soft); }
+  .delplans-row input { width: 17px; height: 17px; flex: 0 0 auto; cursor: pointer; }
+  .delplans-meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .delplans-all { font-weight: 700; border-bottom: 1px dashed var(--line); border-radius: 0; margin-bottom: 2px; }
   .modal-input { width: 100%; border: 1.5px solid var(--line); border-radius: 11px; padding: 11px 12px; font-size: 15px; color: var(--text); background: #fbfcfe; outline: none; font-family: inherit; margin-bottom: 14px; }
   .modal-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background: #fff; }
   .modal-btn { border: 1px solid var(--line); background: var(--brand); color: #fff; border-radius: 11px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
@@ -972,7 +982,7 @@
         </div>
         <button class="tb-mini" id="add-plan-btn">新建计划</button>
         <button class="tb-mini" id="rename-plan-btn" title="自定义计划名称">✎ 自定义</button>
-        <button class="tb-mini del-plan" id="del-plan-btn" title="删除当前计划">✕ 删除</button>
+        <button class="tb-mini del-plan" id="del-plan-btn" title="删除计划">删除</button>
       </div>
     </div>
     <div class="stats">
@@ -1838,6 +1848,18 @@
   function closeModal() { modalOverlay.style.display = "none"; }
   function showAlert(msg, onOk) { openModal(escapeHtml(msg), [{ label: "知道了", primary: true, onClick: onOk }]); }
   function showConfirm(msg, onOk, danger) { openModal(escapeHtml(msg), [{ label: "取消" }, { label: "确认", primary: true, danger: danger, onClick: onOk }]); }
+  // 确认按钮倒计时：先禁用 secs 秒后才可点（防止误触，与「清空」一致）
+  function startConfirmWait(okBtn, baseLabel, secs) {
+    okBtn.disabled = true; okBtn.style.opacity = ".5"; okBtn.style.cursor = "not-allowed";
+    var left = secs;
+    okBtn.textContent = baseLabel + " (" + left + "s)";
+    var t = setInterval(function () {
+      left--;
+      if (left <= 0) { clearInterval(t); okBtn.disabled = false; okBtn.textContent = baseLabel; okBtn.style.opacity = "1"; okBtn.style.cursor = "pointer"; }
+      else { okBtn.textContent = baseLabel + " (" + left + "s)"; }
+    }, 1000);
+    return t;
+  }
 
   // ---------- 重复记录对比弹窗（添加时检测到重复用） ----------
   var dupOverlay = document.getElementById("dup-overlay");
@@ -2427,7 +2449,7 @@
     var isPlan = !!getProfile(currentView);
     document.getElementById("rename-plan-btn").style.display = isPlan ? "" : "none";
     // 只能选单个计划，单计划也允许删除（会补建默认计划）
-    document.getElementById("del-plan-btn").disabled = !isPlan;
+    document.getElementById("del-plan-btn").disabled = profiles.length === 0;
   }
   function renderPlanSelect() {
     var opts = profiles.map(function (p) { return { value: p.id, label: p.name }; });
@@ -2735,27 +2757,7 @@
   // ---------- delete plan (prominent + warning) ----------
   document.getElementById("del-plan-btn").addEventListener("click", function () {
     if (this.disabled) return;
-    if (currentView === "all" || !getProfile(currentView)) { showAlert("请先在顶部下拉框中选择一个计划，再点击删除"); return; }
-    var p = getProfile(currentView);
-    var cnt = records.filter(function (r) { return r.profile === p.id; }).length;
-    var isOnlyProfile = profiles.length <= 1;
-    var msg = "⚠️ 删除计划「" + escapeHtml(p.name) + "」" + (cnt > 0 ? "\n将同时删除该计划下的 " + cnt + " 条记录" : "");
-    if (isOnlyProfile) msg += "\n\n这是唯一的计划，删除后将自动创建默认「Plan A」作为替代。";
-    msg += "\n此操作不可恢复！";
-    showConfirm(msg, function () {
-      profiles = profiles.filter(function (x) { return x.id !== p.id; });
-      records = records.filter(function (r) { return r.profile !== p.id; });
-      // 如果删光了所有计划，自动补建默认计划
-      if (profiles.length === 0) {
-        var fallbackId = uid();
-        profiles.push({ id: fallbackId, name: "Plan A", color: PALETTE[0] });
-        // 孤立记录归到默认计划
-        records.forEach(function (r) { r.profile = fallbackId; });
-      }
-      currentView = profiles[0] ? profiles[0].id : "all";
-      saveView();
-      saveProfiles(); saveRecords(); renderAll();
-    }, true);
+    openDeletePlansModal();
   });
 
   // ---------- add plan ----------
@@ -3010,6 +3012,60 @@
     }
   }
 
+  // ---------- 删除计划：多选弹窗（自定义勾选 / 全选，6s 等待确认，无图标，关键提示标红居中）----------
+  var dpTimer = null;
+  function openDeletePlansModal() {
+    if (dpTimer) { clearInterval(dpTimer); dpTimer = null; }
+    var listHtml = '<label class="delplans-row delplans-all"><input type="checkbox" id="dp-all"> 全选</label>';
+    profiles.forEach(function (p) {
+      var cnt = records.filter(function (r) { return r.profile === p.id; }).length;
+      var checked = (p.id === currentView) ? " checked" : "";
+      listHtml += '<label class="delplans-row"><input type="checkbox" class="dp-cb" value="' + p.id + '"' + checked + '>' +
+        ' ' + escapeHtml(p.name) + '<span class="delplans-meta">' + cnt + ' 条</span></label>';
+    });
+    modalMsg.innerHTML =
+      '<div class="dm-center">' +
+        '<p>请勾选要删除的计划</p>' +
+        '<p class="warn-red">将同时删除所选计划下的<strong>所有记录</strong>，<strong>此操作不可恢复</strong>！</p>' +
+      '</div>' +
+      '<div class="delplans-list">' + listHtml + '</div>';
+    modalActions.innerHTML = "";
+    var cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "取消";
+    cancelBtn.className = "modal-cancel";
+    cancelBtn.addEventListener("click", function () { if (dpTimer) { clearInterval(dpTimer); dpTimer = null; } closeModal(); });
+    var okBtn = document.createElement("button");
+    okBtn.textContent = "确认删除";
+    okBtn.className = "modal-ok danger";
+    okBtn.addEventListener("click", function () {
+      if (okBtn.disabled) return;
+      var ids = Array.prototype.slice.call(modalMsg.querySelectorAll(".dp-cb"))
+        .filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
+      if (ids.length === 0) { showAlert("请至少选择一个计划"); return; }
+      if (dpTimer) { clearInterval(dpTimer); dpTimer = null; }
+      closeModal();
+      profiles = profiles.filter(function (x) { return ids.indexOf(x.id) < 0; });
+      records = records.filter(function (r) { return ids.indexOf(r.profile) < 0; });
+      if (profiles.length === 0) {
+        var fid = uid();
+        profiles.push({ id: fid, name: "Plan A", color: PALETTE[0] });
+        records.forEach(function (r) { r.profile = fid; });
+      }
+      currentView = (profiles[0] && profiles[0].id) || "all";
+      saveView(); saveProfiles(); saveRecords(); renderAll();
+    });
+    modalActions.appendChild(cancelBtn);
+    modalActions.appendChild(okBtn);
+    modalOverlay.style.display = "flex";
+    // 全选联动
+    var allCb = modalMsg.querySelector("#dp-all");
+    var cbs = Array.prototype.slice.call(modalMsg.querySelectorAll(".dp-cb"));
+    allCb.addEventListener("change", function () { cbs.forEach(function (c) { c.checked = allCb.checked; }); });
+    cbs.forEach(function (c) { c.addEventListener("change", function () { allCb.checked = cbs.every(function (x) { return x.checked; }); }); });
+    // 6 秒等待
+    dpTimer = startConfirmWait(okBtn, "确认删除", 6);
+  }
+
   // ---------- clear all：弹窗确认（与「删除」同样风格；需等待 6s 才能确认，期间可点左侧取消）----------
   var clearBtn = document.getElementById("clear-btn");
   var clearModalTimer = null;
@@ -3019,7 +3075,11 @@
   });
   function openClearConfirm() {
     if (clearModalTimer) { clearInterval(clearModalTimer); clearModalTimer = null; }
-    modalMsg.innerHTML = "⚠️ 确定要清空 <b>全部</b> 投注记录吗？<br>此操作不可恢复！<br><br>请等待 <b>6 秒</b> 后才可确认。";
+    modalMsg.innerHTML = '<div class="dm-center">' +
+      '<p>确定要清空<strong>全部</strong>投注记录吗？</p>' +
+      '<p class="warn-red">此操作<strong>不可恢复</strong>！</p>' +
+      '<p>请等待 <span class="warn-red">6 秒</span> 后才可确认。</p>' +
+      '</div>';
     modalActions.innerHTML = "";
     var cancelBtn = document.createElement("button");
     cancelBtn.textContent = "取消";
