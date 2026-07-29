@@ -297,7 +297,7 @@
   .c-date-day:hover { background: var(--brand-soft); }
   .c-date-day.today { color: var(--brand); font-weight: 700; }
   .c-date-day.sel { background: var(--brand); color: #fff; font-weight: 700; }
-  /* 清空按钮的 6 秒确认态 */
+  /* 清空按钮的 3 秒确认态 */
   .mini.arming { background: var(--red); border-color: var(--red); color: #fff; font-weight: 700; }
   .seg { display: flex; gap: 8px; }
   .seg label {
@@ -3012,7 +3012,7 @@
     }
   }
 
-  // ---------- 删除计划：多选弹窗（自定义勾选 / 全选，6s 等待确认，无图标，关键提示标红居中）----------
+  // ---------- 删除计划：多选弹窗（自定义勾选 / 全选，3s 等待确认，无图标，关键提示标红居中）----------
   var dpTimer = null;
   function openDeletePlansModal() {
     if (dpTimer) { clearInterval(dpTimer); dpTimer = null; }
@@ -3063,11 +3063,11 @@
     var cbs = Array.prototype.slice.call(modalMsg.querySelectorAll(".dp-cb"));
     allCb.addEventListener("change", function () { cbs.forEach(function (c) { c.checked = allCb.checked; }); });
     cbs.forEach(function (c) { c.addEventListener("change", function () { allCb.checked = cbs.every(function (x) { return x.checked; }); }); });
-    // 6 秒等待
-    dpTimer = startConfirmWait(okBtn, "确认删除", 6);
+    // 3 秒等待
+    dpTimer = startConfirmWait(okBtn, "确认删除", 3);
   }
 
-  // ---------- clear all：弹窗确认（与「删除」同样风格；需等待 6s 才能确认，期间可点左侧取消）----------
+  // ---------- clear all：弹窗确认（与「删除」同样风格；需等待 3s 才能确认，期间可点左侧取消）----------
   var clearBtn = document.getElementById("clear-btn");
   var clearModalTimer = null;
   clearBtn.addEventListener("click", function () {
@@ -3079,7 +3079,7 @@
     modalMsg.innerHTML = '<div class="dm-center">' +
       '<p>确定要清空<strong>全部</strong>投注记录吗？</p>' +
       '<p class="warn-red">此操作<strong>不可恢复</strong>！</p>' +
-      '<p>请等待 <span class="warn-red">6 秒</span> 后才可确认。</p>' +
+      '<p>请等待 <span class="warn-red">3 秒</span> 后才可确认。</p>' +
       '</div>';
     modalActions.innerHTML = "";
     var cancelBtn = document.createElement("button");
@@ -3090,13 +3090,13 @@
       closeModal();
     });
     var okBtn = document.createElement("button");
-    okBtn.textContent = "确认清空 (6s)";
+    okBtn.textContent = "确认清空 (3s)";
     okBtn.className = "modal-ok danger";
     okBtn.disabled = true;
     okBtn.style.opacity = ".5";
     okBtn.style.cursor = "not-allowed";
     okBtn.addEventListener("click", function () {
-      if (okBtn.disabled) return;            // 6 秒内点击无效
+      if (okBtn.disabled) return;            // 3 秒内点击无效
       if (clearModalTimer) { clearInterval(clearModalTimer); clearModalTimer = null; }
       closeModal();
       records = []; saveRecords(); renderAll();
@@ -3104,7 +3104,7 @@
     modalActions.appendChild(cancelBtn);
     modalActions.appendChild(okBtn);
     modalOverlay.style.display = "flex";
-    var left = 6;
+    var left = 3;
     clearModalTimer = setInterval(function () {
       left--;
       if (left <= 0) {
