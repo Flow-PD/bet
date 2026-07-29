@@ -2737,16 +2737,27 @@
     datePickers.m = initDatePicker("m-date-wrap", "m-date-trigger", "m-date-pop", "m-date", r.date || "", null);
     var mEls = { amount: document.getElementById("m-amount"), bonus: document.getElementById("m-bonus"), odds: document.getElementById("m-odds") };
     var getMResult = function () { return document.querySelector('input[name="m-result"]:checked').value; };
+    // 与添加表单 syncSeg 同步：红单无奖金（空/0）时按 本金×赔率 自动算奖金；黑单清空奖金框
+    function syncMSeg() {
+      var val = getMResult();
+      document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
+      if (val === "黑") {
+        mEls.bonus.value = "";
+      } else {
+        var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0;
+        var B = parseFloat(mEls.bonus.value);
+        if ((mEls.bonus.value === "" || isNaN(B) || B === 0) && A > 0 && O > 0) {
+          mEls.bonus.value = numStr(Math.round(A * O * 100) / 100);
+        }
+      }
+    }
     ["amount", "bonus", "odds"].forEach(function (f) {
       mEls[f].addEventListener("input", function () { recalcTriple(f, mEls, getMResult()); });
     });
     document.querySelectorAll('#m-seg input').forEach(function (el) {
-      el.addEventListener("change", function () {
-        document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
-        if (getMResult() === "黑") { mEls.bonus.value = ""; }
-        else { var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0; if (O > 0) mEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
-      });
+      el.addEventListener("change", syncMSeg);
     });
+    syncMSeg(); // 打开弹窗即按当前结果同步一次（红单自动算出奖金）
   }
 
   // ---------- form ----------
