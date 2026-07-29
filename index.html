@@ -112,6 +112,8 @@
     --black-soft: #eceff3;
     --black-ink: #2b3340;     /* "黑"文字/前景色（夜间自动转浅，避免深字配深底） */
     --green: #1ba672;
+    --pending: #b07d2b;          /* 待开奖：琥珀/赭石，中性不抢红绿 */
+    --pending-soft: #fbf1de;
     --shadow: 0 6px 24px rgba(31,39,51,.08);
     --radius: 16px;
   }
@@ -334,6 +336,7 @@
   .seg input { display: none; }
   .seg label.red.on { background: var(--red-soft); border-color: var(--red); color: var(--red); }
   .seg label.black.on { background: var(--black-soft); border-color: var(--black); color: var(--black-ink); }
+  .seg label.pending.on { background: var(--pending-soft); border-color: var(--pending); color: var(--pending); }
   .hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 1px; }
   .actions { display:flex; gap: 10px; margin-top: 4px; }
   .btn { border: none; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: transform .08s, opacity .15s; flex: 1; }
@@ -504,6 +507,7 @@
   .rec .tag { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
   .rec .tag.red { background: var(--red-soft); color: var(--red); }
   .rec .tag.black { background: var(--black-soft); color: var(--black-ink); }
+  .rec .tag.pending { background: var(--pending-soft); color: var(--pending); }
   .rec .meta { display:flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: #4a5464; }
   .rec .meta b { color: var(--text); font-variant-numeric: tabular-nums; }
   .rec .meta .pl.pos { color: var(--red); font-weight: 700; }
@@ -727,6 +731,7 @@
   .profile-rec-bar { width: 5px; height: 40px; border-radius: 3px; flex-shrink: 0; }
   .profile-rec-bar.red { background: var(--red); }
   .profile-rec-bar.black { background: var(--green); }
+  .profile-rec-bar.pending { background: var(--pending); }
   .profile-rec-info { flex: 1; min-width: 0; }
   .profile-rec-event { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .profile-rec-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
@@ -737,6 +742,7 @@
   .profile-rec-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-top: 4px; }
   .profile-rec-tag.red { background: var(--red-soft); color: var(--red); }
   .profile-rec-tag.black { background: #e8f8f0; color: var(--green); }
+  .profile-rec-tag.pending { background: var(--pending-soft); color: var(--pending); }
   .profile-empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
   .profile-plans-list { display: flex; flex-direction: column; gap: 10px; }
   .profile-plan-card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; display: flex; align-items: center; gap: 14px; }
@@ -837,6 +843,9 @@
     --brand: #cdd5e0;
     --brand-soft: #1f2a44;
     --btn-fg: #1a1f27;
+    /* 夜间：待开奖转浅琥珀，深底可读 */
+    --pending: #d9a441;
+    --pending-soft: rgba(217,164,65,.16);
   }
   html[data-theme="dark"] body { background: var(--bg); color: var(--text); }
   html[data-theme="dark"] .card { background: var(--card); }
@@ -1078,6 +1087,7 @@
           <div class="seg" id="f-seg">
             <label class="red" id="lab-red"><input type="radio" name="result" value="红" checked /><span>红 (命中)</span></label>
             <label class="black" id="lab-black"><input type="radio" name="result" value="黑" /><span>黑 (未中)</span></label>
+            <label class="pending" id="lab-pending"><input type="radio" name="result" value="待开奖" /><span>待开奖</span></label>
           </div>
           <span class="hint">由奖金自动判断，也可手动改；选黑本金照扣、奖金记 0</span>
         </div>
@@ -1804,8 +1814,8 @@
     A = parseFloat(A) || 0;
     var O = parseFloat(oddsRaw) || 0;
     var B = parseFloat(bonusRaw) || 0;
-    if (result === "黑") {
-      return { amount: A, odds: O, bonus: 0 };   // 黑单：奖金记 0，赔率保留手动值，金额以输入为准
+    if (result === "黑" || result === "待开奖") {
+      return { amount: A, odds: O, bonus: 0 };   // 黑/待开奖：奖金记 0，赔率保留手动值，金额以输入为准
     }
     if (A > 0 && O > 0) {
       return { amount: A, odds: Math.round(O * 100) / 100, bonus: Math.round(A * O * 100) / 100 };
@@ -1826,8 +1836,8 @@
     var A = parseFloat(els.amount.value) || 0;
     var O = parseFloat(els.odds.value) || 0;
     var B = parseFloat(els.bonus.value) || 0;
-    if (result === "黑") {
-      return;   // 黑单奖金固定 0（由 syncSeg 设为只读），不联动，允许奖金框保持 "0" 或手动清空后保存时自动记 0
+    if (result === "黑" || result === "待开奖") {
+      return;   // 黑/待开奖奖金固定 0（由 syncSeg 设为只读），不联动
     }
     if (anchor === "amount") {
       if (O > 0) els.bonus.value = numStr(Math.round(A * O * 100) / 100);
@@ -1913,7 +1923,8 @@
         '<div class="dup-f"><label>赔率</label><input type="number" id="dup' + side + '-odds" step="0.01" value="' + (rec.odds || 0) + '" /></div>' +
         '<div class="dup-f"><label>结果</label><select id="dup' + side + '-result">' +
           '<option value="红"' + (rec.result === "红" ? " selected" : "") + ">红</option>" +
-          '<option value="黑"' + (rec.result === "黑" ? " selected" : "") + ">黑</option></select></div>" +
+          '<option value="黑"' + (rec.result === "黑" ? " selected" : "") + ">黑</option>" +
+          '<option value="待开奖"' + (rec.result === "待开奖" ? " selected" : "") + ">待开奖</option></select></div>" +
         '<div class="dup-f"><label>奖金</label><input type="number" id="dup' + side + '-bonus" step="0.01" value="' + (rec.bonus || 0) + '" /></div>' +
         '<div class="dup-net" id="dup' + side + '-net"></div>' +
         "</div>";
@@ -1953,7 +1964,7 @@
         dEls[f].addEventListener("input", function () { recalcTriple(f, dEls, getR()); updateDupNet(side); });
       });
       document.getElementById("dup" + side + "-result").addEventListener("change", function () {
-        if (getR() === "黑") { if (dEls.bonus.value === "") dEls.bonus.value = "0"; }
+        if (getR() === "黑" || getR() === "待开奖") { if (dEls.bonus.value === "") dEls.bonus.value = "0"; }
         else { var A = parseFloat(dEls.amount.value) || 0, O = parseFloat(dEls.odds.value) || 0; if (O > 0) dEls.bonus.value = numStr(Math.round(A * O * 100) / 100); }
         updateDupNet(side);
       });
@@ -1999,11 +2010,17 @@
 
   // ---------- stats ----------
   function compute(rs) {
-    var input = 0, ret = 0, win = 0;
-    rs.forEach(function (r) { input += parseFloat(r.amount) || 0; ret += parseFloat(r.bonus) || 0; if (r.result === "红") win++; });
-    return { input: input, ret: ret, net: ret - input, win: win, count: rs.length, winRate: rs.length ? win / rs.length : 0 };
+    var input = 0, ret = 0, win = 0, settled = 0;
+    rs.forEach(function (r) {
+      if (r.result === "待开奖") return;   // 待开奖不计入已结算统计
+      settled++;
+      input += parseFloat(r.amount) || 0;
+      ret += parseFloat(r.bonus) || 0;
+      if (r.result === "红") win++;
+    });
+    return { input: input, ret: ret, net: ret - input, win: win, count: settled, winRate: settled ? win / settled : 0 };
   }
-  // 连红 / 连黑：以最新一条记录为终点，向前统计连续同结果（红/黑）的条数
+  // 连红 / 连黑：以最新一条「已结算」记录为终点，向前统计连续同结果（红/黑）的条数；待开奖跳过不计入
   function computeStreaks(recs) {
     var sorted = recs.slice().sort(function (a, b) {
       if (a.date < b.date) return -1;
@@ -2012,10 +2029,16 @@
     });
     var red = 0, black = 0;
     if (sorted.length) {
-      var last = sorted[sorted.length - 1].result;
-      for (var i = sorted.length - 1; i >= 0; i--) {
-        if (sorted[i].result === last) { if (last === "红") red++; else black++; }
-        else break;
+      var last = null;
+      for (var k = sorted.length - 1; k >= 0; k--) {
+        if (sorted[k].result !== "待开奖") { last = sorted[k].result; break; }
+      }
+      if (last) {
+        for (var i = sorted.length - 1; i >= 0; i--) {
+          if (sorted[i].result === "待开奖") continue;
+          if (sorted[i].result === last) { if (last === "红") red++; else black++; }
+          else break;
+        }
       }
     }
     return { red: red, black: black };
@@ -2416,16 +2439,17 @@
       var p = getProfile(r.profile);
       var pl = (parseFloat(r.bonus) || 0) - (parseFloat(r.amount) || 0);
       var isRed = r.result === "红";
-      var plStr = (pl >= 0 ? "+" : "") + fmtMoney(pl);
+      var isPending = r.result === "待开奖";
+      var plStr = isPending ? "待定" : (pl >= 0 ? "+" : "") + fmtMoney(pl);
       return '<div class="profile-rec">' +
-        '<div class="profile-rec-bar ' + (isRed ? "red" : "black") + '"></div>' +
+        '<div class="profile-rec-bar ' + (isRed ? "red" : r.result === "黑" ? "black" : "pending") + '"></div>' +
         '<div class="profile-rec-info">' +
           '<div class="profile-rec-event">' + escapeHtml(r.event) + '</div>' +
           '<div class="profile-rec-sub">' + r.date + ' · ' + escapeHtml(p ? p.name : "") + '</div>' +
         '</div>' +
         '<div class="profile-rec-amounts">' +
-          '<div class="profile-rec-pl ' + (pl >= 0 ? "pos" : "neg") + '">' + plStr + '</div>' +
-          '<span class="profile-rec-tag ' + (isRed ? "red" : "black") + '">' + (isRed ? "红" : "黑") + '</span>' +
+          '<div class="profile-rec-pl ' + (isPending ? "" : (pl >= 0 ? "pos" : "neg")) + '">' + plStr + '</div>' +
+          '<span class="profile-rec-tag ' + (isRed ? "red" : r.result === "黑" ? "black" : "pending") + '">' + (isRed ? "红" : r.result === "黑" ? "黑" : "待开奖") + '</span>' +
         '</div>' +
       '</div>';
     }).join("");
@@ -2655,9 +2679,11 @@
   // ---------- list ----------
   function sortRecs(arr) { arr.sort(function (a, b) { return (b.date + b.id).localeCompare(a.date + a.id); }); return arr; }
   function renderRec(r) {
-    var y = yieldOf(r), plClass = y >= 0 ? "pos" : "neg";
-    var plText = (y >= 0 ? "+" : "") + fmtPct(y);
-    var tagClass = r.result === "红" ? "red" : "black";
+    var isPending = r.result === "待开奖";
+    var y = isPending ? 0 : yieldOf(r), plClass = isPending ? "" : (y >= 0 ? "pos" : "neg");
+    var plText = isPending ? "待定" : (y >= 0 ? "+" : "") + fmtPct(y);
+    var plMoney = isPending ? "待定" : fmtMoney((parseFloat(r.bonus) || 0) - (parseFloat(r.amount) || 0));
+    var tagClass = r.result === "红" ? "red" : r.result === "黑" ? "black" : "pending";
     var isNew = (r.id === lastAddedId) ? " is-new" : "";
     var evCls = r.result === "红" ? " red-event" : r.result === "黑" ? " black-event" : "";
     return '<div class="rec' + evCls + isNew + '" data-id="' + r.id + '">' +
@@ -2676,7 +2702,7 @@
         '<span>投入 <b>' + fmtMoney(r.amount) + '</b></span>' +
         '<span>赔率 <b>' + (parseFloat(r.odds) || 0) + '</b></span>' +
         '<span>奖金 <b>' + fmtMoney(r.bonus) + '</b></span>' +
-        '<span>纯盈利 <b class="pl ' + plClass + '">' + fmtMoney((parseFloat(r.bonus) || 0) - (parseFloat(r.amount) || 0)) + '</b></span>' +
+        '<span>纯盈利 <b class="pl ' + plClass + '">' + plMoney + '</b></span>' +
         '<span>收益率 <b class="pl ' + plClass + '">' + plText + '</b></span>' +
       '</div></div>';
   }
@@ -2715,6 +2741,7 @@
       '<div class="seg" id="m-seg">' +
         '<label class="red' + (r.result === "红" ? " on" : "") + '"><input type="radio" name="m-result" value="红"' + (r.result === "红" ? " checked" : "") + ' /><span>红 (命中)</span></label>' +
         '<label class="black' + (r.result === "黑" ? " on" : "") + '"><input type="radio" name="m-result" value="黑"' + (r.result === "黑" ? " checked" : "") + ' /><span>黑 (未中)</span></label>' +
+        '<label class="pending' + (r.result === "待开奖" ? " on" : "") + '"><input type="radio" name="m-result" value="待开奖"' + (r.result === "待开奖" ? " checked" : "") + ' /><span>待开奖</span></label>' +
       '</div>' +
       '<div class="modal-label">奖金</div>' +
       '<input class="modal-input" id="m-bonus" type="number" min="0" step="0.01" value="' + (parseFloat(r.bonus) || 0) + '" />';
@@ -2741,7 +2768,7 @@
     function syncMSeg() {
       var val = getMResult();
       document.querySelectorAll('#m-seg label').forEach(function (l) { l.classList.toggle("on", l.querySelector("input").checked); });
-      if (val === "黑") {
+      if (val === "黑" || val === "待开奖") {
         mEls.bonus.value = "";
       } else {
         var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0;
@@ -2779,8 +2806,9 @@
     var val = getAddResult();
     document.getElementById("lab-red").classList.toggle("on", val === "红");
     document.getElementById("lab-black").classList.toggle("on", val === "黑");
-    if (val === "黑") {
-      addEls.bonus.value = "";   // 黑单无奖金：清空奖金框，用户可直接输入奖金触发自动切红
+    document.getElementById("lab-pending").classList.toggle("on", val === "待开奖");
+    if (val === "黑" || val === "待开奖") {
+      addEls.bonus.value = "";   // 黑/待开奖：无奖金，清空奖金框
     } else {
       if (addEls.bonus.value === "") {
         var A = parseFloat(addEls.amount.value) || 0, O = parseFloat(addEls.odds.value) || 0;
@@ -2793,6 +2821,7 @@
     var raw = addEls.bonus.value;
     var b = parseFloat(raw);
     var target = (raw === "" || isNaN(b) || b <= 0) ? "黑" : "红";
+    if (getAddResult() === "待开奖") return;   // 待开奖为明确选择，奖金输入不自动改写它
     if (getAddResult() === target) return;
     var radio = document.querySelector('input[name="result"][value="' + target + '"]');
     if (radio) { radio.checked = true; syncSeg(); }
@@ -2949,7 +2978,7 @@
     if (isNaN(n) || n === 0) return "#5b6472";
     return n > 0 ? "#e83b3b" : "#1ba672";
   }
-  function resultColor(s) { return s === "红" ? "#e83b3b" : s === "黑" ? "#1ba672" : "#5b6472"; }
+  function resultColor(s) { return s === "红" ? "#e83b3b" : s === "黑" ? "#1ba672" : s === "待开奖" ? "#b07d2b" : "#5b6472"; }
   // 胜率三区：低(0-30%)绿 / 警示(30-40%)琥珀 / 安全(≥40%)红
   function winRateClass(wr) {
     var p = (wr || 0) * 100;
@@ -3215,7 +3244,7 @@
           '<span class="clr-date">' + escapeHtml(r.date || "未注明") + '</span>' +
           '<span class="clr-ev">' + escapeHtml(r.event || "(未命名)") + '</span>' +
         '</span>' +
-        '<span class="delplans-meta">' + (r.result === "红" ? "红" : "黑") + ' · ¥' + fmtMoney(r.amount) + '</span>' +
+        '<span class="delplans-meta">' + (r.result === "红" ? "红" : r.result === "黑" ? "黑" : "待开奖") + ' · ¥' + fmtMoney(r.amount) + '</span>' +
         '</label>';
     });
 
@@ -3372,7 +3401,10 @@
       if (isNaN(amount)) continue;
       var odds = parseFloat(String(get("odds")).replace(/[优化]/g, ""));
       if (isNaN(odds)) odds = 0;
-      var result = /[中红赢胜]/.test(get("result")) ? "红" : "黑";
+      var resRaw = (get("结果") || get("result") || "").toString();
+      var result = /[中红赢胜]/.test(resRaw) ? "红"
+        : /[待开奖未开奖开奖中]|pending/i.test(resRaw) ? "待开奖"
+        : "黑";
       var bonusRaw = parseFloat(get("bonus"));
       var bonus;
       if (isNaN(bonusRaw)) {
@@ -3410,7 +3442,10 @@
       if (isNaN(amount)) return;
       var odds = parseFloat(o.odds != null ? o.odds : o.赔率);
       if (isNaN(odds)) odds = 0;
-      var result = /[中红赢胜]/.test(String(o.result != null ? o.result : o.结果 || "")) ? "红" : "黑";
+      var resRaw = String(o.result != null ? o.result : o.结果 || "");
+      var result = /[中红赢胜]/.test(resRaw) ? "红"
+        : /[待开奖未开奖开奖中]|pending/i.test(resRaw) ? "待开奖"
+        : "黑";
       var bonusRaw = parseFloat(o.bonus != null ? o.bonus : o.奖金);
       var bonus;
       if (isNaN(bonusRaw)) bonus = (result === "黑") ? 0 : (odds > 0 ? Math.round(amount * odds * 100) / 100 : amount);
