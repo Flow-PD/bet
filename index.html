@@ -532,12 +532,12 @@
   .dm-center { text-align: center; line-height: 1.7; }
   .dm-center p { margin: 4px 0; }
   .warn-red { color: var(--red); font-weight: 700; }
-  .delplans-list { margin-top: 10px; max-height: 230px; overflow-y: auto; text-align: left; border-top: 1px solid var(--line); padding-top: 6px; }
-  .delplans-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; font-size: 14px; cursor: pointer; border-radius: 8px; }
-  .delplans-row:hover { background: var(--brand-soft); }
-  .delplans-row input { width: 17px; height: 17px; flex: 0 0 auto; cursor: pointer; }
-  .delplans-meta { color: var(--muted); font-size: 12px; margin-left: auto; }
-  .delplans-all { font-weight: 700; border-bottom: 1px dashed var(--line); border-radius: 0; margin-bottom: 2px; }
+  .delplans-list { margin-top: 12px; max-height: 240px; overflow-y: auto; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+  .delplans-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid var(--line); border-radius: 12px; background: var(--card); transition: background .15s, border-color .15s; }
+  .delplans-row:hover { background: var(--brand-soft); border-color: var(--brand); }
+  .delplans-row input { width: 18px; height: 18px; flex: 0 0 auto; cursor: pointer; accent-color: var(--brand); }
+  .delplans-meta { color: var(--muted); font-size: 12px; margin-left: auto; font-weight: 500; }
+  .delplans-all { font-weight: 700; color: var(--brand); background: var(--brand-soft); border-color: var(--brand-soft); }
   .modal-input { width: 100%; border: 1.5px solid var(--line); border-radius: 11px; padding: 11px 12px; font-size: 15px; color: var(--text); background: #fbfcfe; outline: none; font-family: inherit; margin-bottom: 14px; }
   .modal-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background: #fff; }
   .modal-btn { border: 1px solid var(--line); background: var(--brand); color: #fff; border-radius: 11px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
@@ -3026,7 +3026,8 @@
     modalMsg.innerHTML =
       '<div class="dm-center">' +
         '<p>请勾选要删除的计划</p>' +
-        '<p class="warn-red">将同时删除所选计划下的<strong>所有记录</strong>，<strong>此操作不可恢复</strong>！</p>' +
+        '<p class="warn-red">将同时删除所选计划下的所有</p>' +
+        '<p class="warn-red">此操作不可恢复！</p>' +
       '</div>' +
       '<div class="delplans-list">' + listHtml + '</div>';
     modalActions.innerHTML = "";
