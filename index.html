@@ -740,7 +740,7 @@
   .scheme-banner-title { font-size: 20px; font-weight: 700; }
   .scheme-beta { font-size: 11px; background: rgba(255,255,255,.22); padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
   .scheme-banner-sub { font-size: 12.5px; opacity: .85; margin-top: 6px; }
-  .scheme-body { max-width: 828px; margin: 0 auto; padding: 16px 16px 40px; }
+  .scheme-body { max-width: 828px; margin: 0 auto; padding: 16px 16px 84px; }
   .scheme-note { font-size: 13px; color: var(--muted); background: var(--brand-soft); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; line-height: 1.6; }
   .scheme-note code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; }
   .scheme-card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; }
@@ -761,6 +761,18 @@
   html[data-theme="dark"] #scheme-page { background: #14181f; }
   html[data-theme="dark"] .scheme-banner { background: linear-gradient(135deg, #2a3340 0%, #161c25 100%); }
   html[data-theme="dark"] .scheme-note code { background: rgba(255,255,255,.08); }
+
+  /* ============ 底部标签栏（微信式视图切换：投注记录 / 赛事方案） ============ */
+  #tabbar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; background: var(--topbar-bg); border-top: 1px solid var(--panel-border); box-shadow: 0 -2px 12px rgba(0,0,0,.10); z-index: 600; }
+  #tabbar.hidden { display: none; }
+  .tabbar-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: none; background: transparent; cursor: pointer; font-family: inherit; color: var(--muted); font-size: 11px; padding: 0; -webkit-tap-highlight-color: transparent; transition: color .15s; }
+  .tabbar-tab .ico { font-size: 22px; line-height: 1; }
+  .tabbar-tab.active { color: var(--brand); }
+  html[data-theme="dark"] #tabbar { background: #161c25; border-top-color: #2c3441; }
+  /* 有底部标签栏时，主内容底部留白避免被遮挡；右上角主题 FAB 同步上移 */
+  body.app-in .wrap { padding-bottom: 84px; }
+  body.app-in .theme-fab { bottom: 74px; }
+  @media (max-width: 480px) { body.app-in .theme-fab { bottom: 70px; } }
 
   html[data-theme="dark"] {
     --bg: linear-gradient(135deg, #1c2533 0%, #14181f 55%, #10141b 100%); --card: #1c222b; --text: #e6e9ef; --muted: #aebacb;
@@ -931,9 +943,8 @@
        </button>
        <div class="user-drop" id="user-drop">
          <div class="user-drop-email" id="user-drop-email"></div>
-         <button class="user-drop-btn" id="profile-btn" title="查看个人主页">🏠 个人主页</button>
-        <button class="user-drop-btn scheme-open" id="scheme-open-btn" title="赛事方案（Beta）">🧩 赛事方案</button>
-         <button class="user-drop-btn avatar-change" id="avatar-change-btn" title="更换头像">🎨 更换头像</button>
+        <button class="user-drop-btn" id="profile-btn" title="查看个人主页">🏠 个人主页</button>
+        <button class="user-drop-btn avatar-change" id="avatar-change-btn" title="更换头像">🎨 更换头像</button>
          <button class="user-drop-btn migrate" id="migrate-btn" title="导入本地数据到云端" style="display:none">导入本地数据</button>
          <button class="user-drop-btn logout" id="logout-btn">登出</button>
        </div>
@@ -1144,7 +1155,6 @@
   <!-- ===== 赛事方案模块（占位 / 朋友后续实现，不影响现有投注记录界面） ===== -->
   <div id="scheme-page" class="hidden">
     <div class="scheme-banner">
-      <button class="scheme-back-btn" id="scheme-back-btn" type="button">← 返回</button>
       <div class="scheme-banner-title">赛事方案 <span class="scheme-beta">Beta</span></div>
       <div class="scheme-banner-sub">比赛信息 · 赔率 · 下注倍数 · 奖金优化 · 方案保存 · 赛后自动判定</div>
     </div>
@@ -1227,6 +1237,16 @@
     </div>
   </div>
 
+  <!-- ===== 底部标签栏（微信式切换：投注记录 / 赛事方案） ===== -->
+  <div id="tabbar" class="hidden">
+    <button class="tabbar-tab active" id="tab-main" type="button">
+      <span class="ico">📊</span><span>投注记录</span>
+    </button>
+    <button class="tabbar-tab" id="tab-scheme" type="button">
+      <span class="ico">🧩</span><span>赛事方案</span>
+    </button>
+  </div>
+
 <script>
 (function () {
   "use strict";
@@ -1287,6 +1307,8 @@
   function showAuthUI() {
     document.getElementById("auth-ui").classList.remove("hidden");
     document.getElementById("app-ui").classList.add("hidden");
+    hideTabbar();
+    document.body.classList.remove("app-in");
     document.getElementById("auth-err").textContent = "";
     document.getElementById("auth-sub").textContent = "登录或注册以同步数据到云端";
     // 恢复已保存的账号/密码
@@ -1318,6 +1340,8 @@
   function showAppUI() {
     document.getElementById("auth-ui").classList.add("hidden");
     document.getElementById("app-ui").classList.remove("hidden");
+    showTabbar();
+    document.body.classList.add("app-in");
   }
 
   function setAuthTab(mode) {
@@ -2251,12 +2275,14 @@
   }
   function showProfilePage() {
     closeAllDrops();
+    hideTabbar();
     document.getElementById("profile-page").classList.remove("hidden");
     document.getElementById("profile-page").scrollTop = 0;
     renderProfilePage();
   }
   function hideProfilePage() {
     document.getElementById("profile-page").classList.add("hidden");
+    showTabbar();
   }
   function renderProfilePage() {
     var av = getSavedAvatar();
@@ -3337,16 +3363,30 @@
       });
     });
   }
-  function showSchemePage() {
-    closeAllDrops();
-    var p = document.getElementById("scheme-page");
-    p.classList.remove("hidden");
-    p.scrollTop = 0;
-    renderSchemeList();
+  // ---- 底部标签栏：微信式切换 投注记录 / 赛事方案 ----
+  function switchTab(tab) {
+    var page = document.getElementById("page");
+    var scheme = document.getElementById("scheme-page");
+    var tabMain = document.getElementById("tab-main");
+    var tabScheme = document.getElementById("tab-scheme");
+    if (tab === "scheme") {
+      page.classList.add("hidden");
+      scheme.classList.remove("hidden");
+      scheme.scrollTop = 0;
+      renderSchemeList();
+      tabMain.classList.remove("active");
+      tabScheme.classList.add("active");
+    } else {
+      scheme.classList.add("hidden");
+      page.classList.remove("hidden");
+      tabScheme.classList.remove("active");
+      tabMain.classList.add("active");
+    }
   }
-  function hideSchemePage() {
-    document.getElementById("scheme-page").classList.add("hidden");
-  }
+  function showTabbar() { document.getElementById("tabbar").classList.remove("hidden"); }
+  function hideTabbar() { document.getElementById("tabbar").classList.add("hidden"); }
+  document.getElementById("tab-main").addEventListener("click", function () { switchTab("main"); });
+  document.getElementById("tab-scheme").addEventListener("click", function () { switchTab("scheme"); });
   // ---- 朋友后续实现的扩展点（当前为占位） ----
   var SchemeModule = {
     // TODO(朋友): 接入外网比赛信息，渲染到 #scheme-match-area
@@ -3356,13 +3396,6 @@
     // TODO(朋友): 赛后根据赛果判定方案是否中奖，更新方案 status
     judgeResults: function () { console.log("[SchemeModule] judgeResults 待实现"); }
   };
-  document.getElementById("scheme-open-btn").addEventListener("click", function (e) {
-    e.stopPropagation();
-    showSchemePage();
-  });
-  document.getElementById("scheme-back-btn").addEventListener("click", function () {
-    hideSchemePage();
-  });
   document.getElementById("scheme-save-btn").addEventListener("click", function () {
     var name = (document.getElementById("scheme-name").value || "").trim();
     if (!name) { alert("请先填写方案名称"); return; }
