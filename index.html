@@ -2746,7 +2746,8 @@
       } else {
         var A = parseFloat(mEls.amount.value) || 0, O = parseFloat(mEls.odds.value) || 0;
         var B = parseFloat(mEls.bonus.value);
-        if ((mEls.bonus.value === "" || isNaN(B) || B === 0) && A > 0 && O > 0) {
+        // 红单：奖金为空/0/或等于投入（导入保本默认值）时，按 本金×赔率 自动算
+        if ((mEls.bonus.value === "" || isNaN(B) || B === 0 || (B === A && B > 0)) && A > 0 && O > 0) {
           mEls.bonus.value = numStr(Math.round(A * O * 100) / 100);
         }
       }
@@ -3375,8 +3376,8 @@
       var bonusRaw = parseFloat(get("bonus"));
       var bonus;
       if (isNaN(bonusRaw)) {
-        // 奖金为空：赔率仅作参考、不用于推算；黑单返还0，红单暂记保本(返还=投入)待手动修正
-        bonus = (result === "黑") ? 0 : amount;
+        // 奖金为空：黑单返还0；红单按 投入×赔率 自动算（有赔率就算，没赔率才保本）
+        bonus = (result === "黑") ? 0 : (odds > 0 ? Math.round(amount * odds * 100) / 100 : amount);
       } else {
         bonus = Math.round(bonusRaw * 100) / 100; // 直接采用表中奖金(即返还/中奖金额)
       }
@@ -3412,7 +3413,7 @@
       var result = /[中红赢胜]/.test(String(o.result != null ? o.result : o.结果 || "")) ? "红" : "黑";
       var bonusRaw = parseFloat(o.bonus != null ? o.bonus : o.奖金);
       var bonus;
-      if (isNaN(bonusRaw)) bonus = (result === "黑") ? 0 : amount;
+      if (isNaN(bonusRaw)) bonus = (result === "黑") ? 0 : (odds > 0 ? Math.round(amount * odds * 100) / 100 : amount);
       else bonus = Math.round(bonusRaw * 100) / 100;
       var pname = o.profile != null ? o.profile : o.plan != null ? o.plan : o.账本 != null ? o.账本 : o.计划;
       var pid = (pname != null && String(pname).trim() !== "") ? findOrCreateProfile(String(pname).trim()) : defaultProfile;
