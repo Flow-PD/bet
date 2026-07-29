@@ -952,11 +952,11 @@
    </div>
    <div class="topbar-inner">
     <h1>个人投注记录</h1>
-    <div class="sub" id="view-sub">计划：暴富计划</div>
+    <div class="sub" id="view-sub">计划：Plan A</div>
     <div class="tb-plan">
       <div class="plan-sel">
         <div class="c-select" id="plan-select-wrap">
-          <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">暴富计划</span></div>
+          <div class="c-select-trigger" id="plan-select-trigger"><span id="plan-select-text">Plan A</span></div>
           <div class="c-drop" id="plan-drop"></div>
         </div>
         <button class="tb-mini" id="add-plan-btn">新建计划</button>
@@ -1531,10 +1531,10 @@
     });
     if (profiles.length === 0) {
       var defaultId = uid();
-      profiles.push({ id: defaultId, name: "暴富计划", color: PALETTE[0] });
+      profiles.push({ id: defaultId, name: "Plan A", color: PALETTE[0] });
       // 同步默认计划到云端
       var { error: ierr } = await supabase.from("profiles").upsert({
-        id: defaultId, user_id: user.id, name: "暴富计划", color: PALETTE[0]
+        id: defaultId, user_id: user.id, name: "Plan A", color: PALETTE[0]
       });
       if (ierr) console.warn("save default profile failed", ierr);
     }
@@ -1566,7 +1566,7 @@
     try { records = JSON.parse(localStorage.getItem(recKey())) || []; } catch (e) { records = []; }
     if (!Array.isArray(profiles)) profiles = [];
     if (!Array.isArray(records)) records = [];
-    if (profiles.length === 0) { profiles.push({ id: uid(), name: "暴富计划", color: PALETTE[0] }); saveProfiles(); }
+    if (profiles.length === 0) { profiles.push({ id: uid(), name: "Plan A", color: PALETTE[0] }); saveProfiles(); }
     records.forEach(function (r) {
       if (!r.profile || !profiles.some(function (p) { return p.id === r.profile; })) r.profile = profiles[0].id;
     });
@@ -1797,7 +1797,7 @@
   function findOrCreateProfile(name) {
     name = (name || "").trim();
     if (!name) {
-      if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() });
+      if (profiles.length === 0) profiles.push({ id: uid(), name: "Plan A", color: nextColor() });
       return profiles[0].id;
     }
     var p = profiles.find(function (x) { return x.name.toLowerCase() === name.toLowerCase(); });
@@ -2729,7 +2729,7 @@
     var cnt = records.filter(function (r) { return r.profile === p.id; }).length;
     var isOnlyProfile = profiles.length <= 1;
     var msg = "⚠️ 删除计划「" + escapeHtml(p.name) + "」" + (cnt > 0 ? "\n将同时删除该计划下的 " + cnt + " 条记录" : "");
-    if (isOnlyProfile) msg += "\n\n这是唯一的计划，删除后将自动创建默认「暴富计划」作为替代。";
+    if (isOnlyProfile) msg += "\n\n这是唯一的计划，删除后将自动创建默认「Plan A」作为替代。";
     msg += "\n此操作不可恢复！";
     showConfirm(msg, function () {
       profiles = profiles.filter(function (x) { return x.id !== p.id; });
@@ -2737,7 +2737,7 @@
       // 如果删光了所有计划，自动补建默认计划
       if (profiles.length === 0) {
         var fallbackId = uid();
-        profiles.push({ id: fallbackId, name: "暴富计划", color: PALETTE[0] });
+        profiles.push({ id: fallbackId, name: "Plan A", color: PALETTE[0] });
         // 孤立记录归到默认计划
         records.forEach(function (r) { r.profile = fallbackId; });
       }
@@ -3069,7 +3069,7 @@
         });
         // 导入后清理「没有任何记录」的空账本，避免对比表出现空占位
         profiles = profiles.filter(function (p) { return records.some(function (r) { return r.profile === p.id; }); });
-        if (profiles.length === 0) { profiles.push({ id: uid(), name: "暴富计划", color: PALETTE[0] }); }
+        if (profiles.length === 0) { profiles.push({ id: uid(), name: "Plan A", color: PALETTE[0] }); }
         saveProfiles(); saveRecords(); renderAll();
         showAlert("成功导入 " + added + " 条、更新 " + updated + " 条（共读取 " + imported.length + " 条；" + profiles.length + " 个计划）");
       } catch (err) { showAlert("导入失败：" + err.message); }
@@ -3138,7 +3138,7 @@
       }
       var pid = map.profile !== undefined ? findOrCreateProfile(get("profile")) : defaultProfile;
       if (!pid) {
-        if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() });
+        if (profiles.length === 0) profiles.push({ id: uid(), name: "Plan A", color: nextColor() });
         pid = profiles[0].id;
       }
       out.push({
@@ -3172,7 +3172,7 @@
       else bonus = Math.round(bonusRaw * 100) / 100;
       var pname = o.profile != null ? o.profile : o.plan != null ? o.plan : o.账本 != null ? o.账本 : o.计划;
       var pid = (pname != null && String(pname).trim() !== "") ? findOrCreateProfile(String(pname).trim()) : defaultProfile;
-      if (!pid) { if (profiles.length === 0) profiles.push({ id: uid(), name: "暴富计划", color: nextColor() }); pid = profiles[0].id; }
+      if (!pid) { if (profiles.length === 0) profiles.push({ id: uid(), name: "Plan A", color: nextColor() }); pid = profiles[0].id; }
       out.push({
         id: uid(),
         profile: pid,
