@@ -1920,6 +1920,9 @@
     var drop = document.getElementById(dropId);
     var textEl = document.getElementById(textId);
     var currentVal = defaultVal;
+    // 初始化时同步触发按钮文字（否则会残留 HTML 里的静态默认值，与内部选中项不符）
+    var _initOpt = options.find(function (o) { return o.value === defaultVal; });
+    if (_initOpt) textEl.textContent = _initOpt.label;
 
     function renderOpts() {
       drop.innerHTML = options.map(function (o) {
