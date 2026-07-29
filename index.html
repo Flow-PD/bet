@@ -1428,8 +1428,8 @@
     var user = (await supabase.auth.getUser()).data.user;
     if (!user) throw new Error("未登录");
 
-    // 加载计划
-    var { data: prows, error: perr } = await supabase.from("profiles").select("*").order("created_at");
+    // 加载计划（仅当前用户的）
+    var { data: prows, error: perr } = await supabase.from("profiles").select("*").eq("user_id", user.id).order("created_at");
     if (perr) throw perr;
     profiles = (prows || []).map(function (p) {
       return { id: p.id, name: p.name, color: p.color };
@@ -1444,8 +1444,8 @@
       if (ierr) console.warn("save default profile failed", ierr);
     }
 
-    // 加载记录
-    var { data: rrows, error: rerr } = await supabase.from("records").select("*").order("created_at");
+    // 加载记录（仅当前用户的）
+    var { data: rrows, error: rerr } = await supabase.from("records").select("*").eq("user_id", user.id).order("created_at");
     if (rerr) throw rerr;
     records = (rrows || []).map(function (r) {
       return {
